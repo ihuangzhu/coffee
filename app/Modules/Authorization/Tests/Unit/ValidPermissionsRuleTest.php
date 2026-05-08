@@ -35,3 +35,8 @@ test('拒绝混合（一条 platform.* + 一条合法）', function () {
     $errors = validateWithRule(['roles.read', 'platform.impersonate.full']);
     expect($errors)->not->toBeEmpty();
 });
+
+test('拒绝数组里出现非字符串元素', function () {
+    $errors = validateWithRule(['roles.read', 123]);
+    expect($errors)->not->toBeEmpty();
+});

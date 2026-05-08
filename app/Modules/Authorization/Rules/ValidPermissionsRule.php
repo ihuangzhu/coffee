@@ -27,7 +27,7 @@ class ValidPermissionsRule implements ValidationRule
 
         foreach ($value as $code) {
             if (! is_string($code)) {
-                $fail("权限码必须是字符串：{$code}");
+                $fail('权限码必须是字符串，实际收到：'.get_debug_type($code));
                 return;
             }
             if (str_starts_with($code, 'platform.')) {
