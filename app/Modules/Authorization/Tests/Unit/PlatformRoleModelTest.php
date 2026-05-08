@@ -9,7 +9,7 @@ uses(RefreshDatabase::class);
 
 test('PlatformRole 工厂可创建', function () {
     $r = PlatformRole::factory()->create([
-        'code' => 'PlatformOps',
+        'code' => 'CustomOps',
         'permissions' => ['platform.tenants.manage'],
     ]);
 
