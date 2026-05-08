@@ -36,6 +36,14 @@ if (app()->environment('testing')) {
     });
 }
 
+if (app()->environment('testing')) {
+    Route::prefix('api')->middleware(['auth:sanctum', 'platform_admin'])->group(function () {
+        Route::get('__platform-perm-probe', function () {
+            return response()->json(['ok' => true]);
+        })->middleware('platform_permission:platform.tenants.manage');
+    });
+}
+
 // 公开端点：登录（throttle 限流防爆破）
 Route::prefix('api/auth')->group(function () {
     Route::post('login', [AuthController::class, 'login'])
