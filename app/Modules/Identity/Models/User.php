@@ -41,6 +41,11 @@ class User extends Authenticatable
         return $this->belongsTo(\App\Modules\Authorization\Models\PlatformRole::class, 'platform_role_id');
     }
 
+    public function roleBindings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Modules\Authorization\Models\UserRoleBinding::class);
+    }
+
     public function memberships(): HasMany
     {
         return $this->hasMany(Membership::class);
