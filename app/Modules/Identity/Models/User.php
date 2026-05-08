@@ -36,6 +36,11 @@ class User extends Authenticatable
         'is_platform_admin' => 'bool',
     ];
 
+    public function platformRole(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\App\Modules\Authorization\Models\PlatformRole::class, 'platform_role_id');
+    }
+
     public function memberships(): HasMany
     {
         return $this->hasMany(Membership::class);
