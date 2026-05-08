@@ -43,4 +43,34 @@ class RoleController extends Controller
 
         return response()->json(['role' => $role], 201);
     }
+
+    public function update(
+        \App\Modules\Authorization\Http\Requests\UpdateRoleRequest $request,
+        string $roleId
+    ): JsonResponse {
+        $tenantId = app(CurrentTenant::class)->require();
+
+        $role = Role::query()->where('id', $roleId)->first();
+        if (! $role) {
+            abort(404);
+        }
+
+        // 系统内置角色（tenant_id IS NULL）不可修改
+        if ($role->is_system) {
+            throw new \App\Support\Exceptions\BusinessException(
+                'role.system-locked',
+                '系统内置角色不可修改',
+                403,
+            );
+        }
+
+        // 别租户角色 → 隐藏存在性，返回 404
+        if ($role->tenant_id !== $tenantId) {
+            abort(404);
+        }
+
+        $role->fill($request->only(['name', 'permissions']))->save();
+
+        return response()->json(['role' => $role]);
+    }
 }

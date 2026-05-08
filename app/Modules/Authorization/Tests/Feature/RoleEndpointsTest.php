@@ -77,3 +77,36 @@ test('POST /api/roles 缺 roles.manage → 403', function () {
         'name' => 'X', 'code' => 'X', 'scope' => 'tenant', 'permissions' => [],
     ])->assertStatus(403);
 });
+
+test('PATCH /api/roles/{id} 更新名字 + 权限', function () {
+    ['tenant' => $t] = actAsMemberWith(['roles.manage']);
+    $r = Role::factory()->create(['tenant_id' => $t->id, 'name' => '原名']);
+
+    $resp = $this->withHeaders(['X-Tenant-Id' => $t->id])
+        ->patchJson("/api/roles/{$r->id}", ['name' => '新名', 'permissions' => ['roles.read']]);
+
+    $resp->assertOk();
+    expect($r->fresh()->name)->toBe('新名');
+    expect($r->fresh()->permissions)->toBe(['roles.read']);
+});
+
+test('PATCH /api/roles/{id} is_system=true → 403 role.system-locked', function () {
+    ['tenant' => $t] = actAsMemberWith(['roles.manage']);
+    $r = Role::query()->where('code', 'TenantAdmin')->whereNull('tenant_id')->firstOrFail();
+
+    $resp = $this->withHeaders(['X-Tenant-Id' => $t->id])
+        ->patchJson("/api/roles/{$r->id}", ['name' => '篡改']);
+
+    $resp->assertStatus(403);
+    expect($resp->json('code'))->toBe('role.system-locked');
+});
+
+test('PATCH /api/roles/{id} 改别租户角色 → 404', function () {
+    ['tenant' => $t] = actAsMemberWith(['roles.manage']);
+    $other = Tenant::factory()->create();
+    $r = Role::factory()->create(['tenant_id' => $other->id]);
+
+    $resp = $this->withHeaders(['X-Tenant-Id' => $t->id])
+        ->patchJson("/api/roles/{$r->id}", ['name' => '篡改']);
+    $resp->assertStatus(404);
+});
