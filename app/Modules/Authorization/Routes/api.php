@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Modules\Authorization\Http\Controllers\MePermissionsController;
+use App\Modules\Authorization\Http\Controllers\Platform\PlatformRoleController;
+use App\Modules\Authorization\Http\Controllers\Platform\UserPlatformRoleController;
 use App\Modules\Authorization\Http\Controllers\RoleBindingController;
 use App\Modules\Authorization\Http\Controllers\RoleController;
 use App\Modules\Authorization\Http\Controllers\UserListController;
@@ -25,15 +27,15 @@ Route::prefix('api')->middleware(['auth:sanctum', 'tenant'])->group(function () 
 });
 
 Route::prefix('api/platform')->middleware(['auth:sanctum', 'platform_admin'])->group(function () {
-    Route::get('roles', [\App\Modules\Authorization\Http\Controllers\Platform\PlatformRoleController::class, 'index'])
+    Route::get('roles', [PlatformRoleController::class, 'index'])
         ->middleware('platform_permission:platform.roles.manage');
-    Route::post('roles', [\App\Modules\Authorization\Http\Controllers\Platform\PlatformRoleController::class, 'store'])
+    Route::post('roles', [PlatformRoleController::class, 'store'])
         ->middleware('platform_permission:platform.roles.manage');
-    Route::patch('roles/{id}', [\App\Modules\Authorization\Http\Controllers\Platform\PlatformRoleController::class, 'update'])
+    Route::patch('roles/{id}', [PlatformRoleController::class, 'update'])
         ->middleware('platform_permission:platform.roles.manage');
-    Route::delete('roles/{id}', [\App\Modules\Authorization\Http\Controllers\Platform\PlatformRoleController::class, 'destroy'])
+    Route::delete('roles/{id}', [PlatformRoleController::class, 'destroy'])
         ->middleware('platform_permission:platform.roles.manage');
     Route::patch('users/{userId}/platform-role', [
-        \App\Modules\Authorization\Http\Controllers\Platform\UserPlatformRoleController::class, 'update'
+        UserPlatformRoleController::class, 'update',
     ])->middleware('platform_permission:platform.roles.manage');
 });

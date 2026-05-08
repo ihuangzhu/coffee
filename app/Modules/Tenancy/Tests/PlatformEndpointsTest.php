@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-use App\Modules\Identity\Models\User;
+use App\Modules\Authorization\Models\PlatformRole;
 use App\Modules\Identity\Models\Membership;
+use App\Modules\Identity\Models\User;
 use App\Modules\Tenancy\Models\Store;
 use App\Modules\Tenancy\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,7 +27,7 @@ test('未登录调 platform endpoint 返回 401', function () {
 
 test('platform admin 创建租户', function () {
     $admin = User::factory()->platformAdmin()->create();
-    $superRole = \App\Modules\Authorization\Models\PlatformRole::query()
+    $superRole = PlatformRole::query()
         ->where('code', 'PlatformSuperAdmin')->firstOrFail();
     $admin->update(['platform_role_id' => $superRole->id]);
     Sanctum::actingAs($admin);
@@ -40,7 +41,7 @@ test('platform admin 创建租户', function () {
 
 test('platform admin 创建 store', function () {
     $admin = User::factory()->platformAdmin()->create();
-    $superRole = \App\Modules\Authorization\Models\PlatformRole::query()
+    $superRole = PlatformRole::query()
         ->where('code', 'PlatformSuperAdmin')->firstOrFail();
     $admin->update(['platform_role_id' => $superRole->id]);
     $t = Tenant::factory()->create();
@@ -55,7 +56,7 @@ test('platform admin 创建 store', function () {
 
 test('platform admin 创建 user 并绑定 tenant 级 membership', function () {
     $admin = User::factory()->platformAdmin()->create();
-    $superRole = \App\Modules\Authorization\Models\PlatformRole::query()
+    $superRole = PlatformRole::query()
         ->where('code', 'PlatformSuperAdmin')->firstOrFail();
     $admin->update(['platform_role_id' => $superRole->id]);
     $t = Tenant::factory()->create();
@@ -78,7 +79,7 @@ test('platform admin 创建 user 并绑定 tenant 级 membership', function () {
 
 test('platform admin 创建 user 并绑定 store 级 membership', function () {
     $admin = User::factory()->platformAdmin()->create();
-    $superRole = \App\Modules\Authorization\Models\PlatformRole::query()
+    $superRole = PlatformRole::query()
         ->where('code', 'PlatformSuperAdmin')->firstOrFail();
     $admin->update(['platform_role_id' => $superRole->id]);
     $t = Tenant::factory()->create();
@@ -101,7 +102,7 @@ test('platform admin 创建 user 并绑定 store 级 membership', function () {
 
 test('phone 重复创建 user 返回 422', function () {
     $admin = User::factory()->platformAdmin()->create();
-    $superRole = \App\Modules\Authorization\Models\PlatformRole::query()
+    $superRole = PlatformRole::query()
         ->where('code', 'PlatformSuperAdmin')->firstOrFail();
     $admin->update(['platform_role_id' => $superRole->id]);
     $t = Tenant::factory()->create();

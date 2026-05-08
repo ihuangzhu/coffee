@@ -16,6 +16,7 @@ class MePermissionsController extends Controller
 
         if ($isPlatformImpersonation) {
             $platformRole = $request->attributes->get('platform_role');
+
             return response()->json([
                 'is_platform_impersonation' => true,
                 'platform_role_code' => $platformRole?->code,

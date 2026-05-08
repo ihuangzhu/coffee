@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Identity\Models;
 
+use App\Modules\Authorization\Models\PlatformRole;
+use App\Modules\Authorization\Models\UserRoleBinding;
 use App\Modules\Identity\Database\Factories\UserFactory;
 use App\Support\Eloquent\HasUlid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
@@ -36,14 +39,14 @@ class User extends Authenticatable
         'is_platform_admin' => 'bool',
     ];
 
-    public function platformRole(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function platformRole(): BelongsTo
     {
-        return $this->belongsTo(\App\Modules\Authorization\Models\PlatformRole::class, 'platform_role_id');
+        return $this->belongsTo(PlatformRole::class, 'platform_role_id');
     }
 
-    public function roleBindings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function roleBindings(): HasMany
     {
-        return $this->hasMany(\App\Modules\Authorization\Models\UserRoleBinding::class);
+        return $this->hasMany(UserRoleBinding::class);
     }
 
     public function memberships(): HasMany

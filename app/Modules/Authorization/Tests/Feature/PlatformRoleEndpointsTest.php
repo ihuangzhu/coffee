@@ -15,6 +15,7 @@ function asPlatformAdminWith(string $perm): User
     $pr = PlatformRole::factory()->create(['permissions' => [$perm]]);
     $u->update(['platform_role_id' => $pr->id]);
     Sanctum::actingAs($u);
+
     return $u;
 }
 

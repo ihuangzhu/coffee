@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Identity\Http\Controllers\AuthController;
 use App\Modules\Identity\Http\Controllers\MeController;
 use App\Support\Tenancy\CurrentTenant;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,9 +17,9 @@ use Illuminate\Support\Facades\Route;
 // 仅在 testing 环境注册：避免生产/线上暴露内部探针端点
 if (app()->environment('testing')) {
     Route::prefix('api')->middleware(['auth:sanctum', 'tenant'])->group(function () {
-        Route::get('__tenant-probe', function (\Illuminate\Http\Request $request) {
+        Route::get('__tenant-probe', function (Request $request) {
             return response()->json([
-                'tenant_id' => app(\App\Support\Tenancy\CurrentTenant::class)->id(),
+                'tenant_id' => app(CurrentTenant::class)->id(),
                 'is_platform_impersonation' => $request->attributes->get('is_platform_impersonation'),
                 'platform_role_code' => $request->attributes->get('platform_role')?->code,
                 'effective_permissions' => $request->attributes->get('effective_permissions'),

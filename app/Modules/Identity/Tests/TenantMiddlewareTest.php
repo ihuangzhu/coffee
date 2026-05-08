@@ -2,8 +2,11 @@
 
 declare(strict_types=1);
 
-use App\Modules\Identity\Models\User;
+use App\Modules\Authorization\Models\PlatformRole;
+use App\Modules\Authorization\Models\Role;
+use App\Modules\Authorization\Models\UserRoleBinding;
 use App\Modules\Identity\Models\Membership;
+use App\Modules\Identity\Models\User;
 use App\Modules\Tenancy\Models\Tenant;
 use App\Support\Tenancy\CurrentTenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -85,25 +88,25 @@ test('membership.status=left 返回 403', function () {
 });
 
 test('普通员工通过后注入 effective_permissions 取并集', function () {
-    $u = \App\Modules\Identity\Models\User::factory()->create();
-    $t = \App\Modules\Tenancy\Models\Tenant::factory()->create();
-    \App\Modules\Identity\Models\Membership::factory()->create([
+    $u = User::factory()->create();
+    $t = Tenant::factory()->create();
+    Membership::factory()->create([
         'user_id' => $u->id, 'tenant_id' => $t->id, 'status' => 'active',
     ]);
-    $r1 = \App\Modules\Authorization\Models\Role::factory()->create([
+    $r1 = Role::factory()->create([
         'tenant_id' => $t->id, 'permissions' => ['roles.read', 'users.read'],
     ]);
-    $r2 = \App\Modules\Authorization\Models\Role::factory()->create([
+    $r2 = Role::factory()->create([
         'tenant_id' => $t->id, 'permissions' => ['users.read', 'stores.read'],
     ]);
-    \App\Modules\Authorization\Models\UserRoleBinding::factory()->create([
+    UserRoleBinding::factory()->create([
         'user_id' => $u->id, 'role_id' => $r1->id, 'tenant_id' => $t->id,
     ]);
-    \App\Modules\Authorization\Models\UserRoleBinding::factory()->create([
+    UserRoleBinding::factory()->create([
         'user_id' => $u->id, 'role_id' => $r2->id, 'tenant_id' => $t->id,
     ]);
 
-    \Laravel\Sanctum\Sanctum::actingAs($u);
+    Sanctum::actingAs($u);
     $resp = $this->withHeaders(['X-Tenant-Id' => $t->id])->getJson('/api/__tenant-probe');
 
     $resp->assertOk();
@@ -113,15 +116,15 @@ test('普通员工通过后注入 effective_permissions 取并集', function () 
 });
 
 test('platform admin impersonation 注入 platform_role', function () {
-    $admin = \App\Modules\Identity\Models\User::factory()->platformAdmin()->create();
-    $pr = \App\Modules\Authorization\Models\PlatformRole::factory()->create([
+    $admin = User::factory()->platformAdmin()->create();
+    $pr = PlatformRole::factory()->create([
         'code' => 'TestSuperAdmin',
         'permissions' => ['platform.impersonate.full'],
     ]);
     $admin->update(['platform_role_id' => $pr->id]);
-    $t = \App\Modules\Tenancy\Models\Tenant::factory()->create();
+    $t = Tenant::factory()->create();
 
-    \Laravel\Sanctum\Sanctum::actingAs($admin);
+    Sanctum::actingAs($admin);
     $resp = $this->withHeaders(['X-Tenant-Id' => $t->id])->getJson('/api/__tenant-probe');
 
     $resp->assertOk();

@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace App\Modules\Authorization\Http\Controllers;
 
+use App\Modules\Authorization\Http\Requests\StoreRoleRequest;
+use App\Modules\Authorization\Http\Requests\UpdateRoleRequest;
 use App\Modules\Authorization\Models\Role;
+use App\Modules\Authorization\Models\UserRoleBinding;
+use App\Support\Exceptions\BusinessException;
 use App\Support\Tenancy\CurrentTenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 
 class RoleController extends Controller
 {
@@ -28,7 +33,7 @@ class RoleController extends Controller
         return response()->json(['roles' => $roles]);
     }
 
-    public function store(\App\Modules\Authorization\Http\Requests\StoreRoleRequest $request): JsonResponse
+    public function store(StoreRoleRequest $request): JsonResponse
     {
         $tenantId = app(CurrentTenant::class)->require();
 
@@ -45,7 +50,7 @@ class RoleController extends Controller
     }
 
     public function update(
-        \App\Modules\Authorization\Http\Requests\UpdateRoleRequest $request,
+        UpdateRoleRequest $request,
         string $roleId
     ): JsonResponse {
         $tenantId = app(CurrentTenant::class)->require();
@@ -57,7 +62,7 @@ class RoleController extends Controller
 
         // 系统内置角色（tenant_id IS NULL）不可修改
         if ($role->is_system) {
-            throw new \App\Support\Exceptions\BusinessException(
+            throw new BusinessException(
                 'role.system-locked',
                 '系统内置角色不可修改',
                 403,
@@ -84,7 +89,7 @@ class RoleController extends Controller
         }
 
         if ($role->is_system) {
-            throw new \App\Support\Exceptions\BusinessException(
+            throw new BusinessException(
                 'role.system-locked', '系统内置角色不可删除', 403,
             );
         }
@@ -94,14 +99,14 @@ class RoleController extends Controller
             abort(404);
         }
 
-        $bindingCount = \App\Modules\Authorization\Models\UserRoleBinding::query()
+        $bindingCount = UserRoleBinding::query()
             ->withoutGlobalScopes()
             ->where('role_id', $roleId)
             ->where('status', 'active')
             ->count();
 
         if ($bindingCount > 0) {
-            throw new \App\Support\Exceptions\BusinessException(
+            throw new BusinessException(
                 'role.in-use',
                 '角色被在用绑定引用，无法删除',
                 409,
@@ -110,8 +115,8 @@ class RoleController extends Controller
         }
 
         // 删除 revoked 绑定留痕（FK restrictOnDelete，revoked 不算占用但需先清理）
-        \Illuminate\Support\Facades\DB::transaction(function () use ($role, $roleId) {
-            \App\Modules\Authorization\Models\UserRoleBinding::query()
+        DB::transaction(function () use ($role, $roleId) {
+            UserRoleBinding::query()
                 ->withoutGlobalScopes()
                 ->where('role_id', $roleId)
                 ->where('status', 'revoked')

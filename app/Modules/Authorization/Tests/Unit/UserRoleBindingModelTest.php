@@ -2,10 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Modules\Authorization\Models\Role;
 use App\Modules\Authorization\Models\UserRoleBinding;
 use App\Modules\Identity\Models\User;
-use App\Modules\Tenancy\Models\Store;
 use App\Modules\Tenancy\Models\Tenant;
 use App\Support\Tenancy\CurrentTenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;

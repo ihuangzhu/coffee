@@ -20,6 +20,7 @@ class ValidPermissionsRule implements ValidationRule
     {
         if (! is_array($value)) {
             $fail('权限列表必须为数组');
+
             return;
         }
 
@@ -28,14 +29,17 @@ class ValidPermissionsRule implements ValidationRule
         foreach ($value as $code) {
             if (! is_string($code)) {
                 $fail('权限码必须是字符串，实际收到：'.get_debug_type($code));
+
                 return;
             }
             if (str_starts_with($code, 'platform.')) {
                 $fail("不允许在商户角色中写入平台权限码：{$code}");
+
                 return;
             }
             if (! in_array($code, $allowed, strict: true)) {
                 $fail("非法权限码：{$code}");
+
                 return;
             }
         }

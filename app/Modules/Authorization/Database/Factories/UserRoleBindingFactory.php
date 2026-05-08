@@ -33,6 +33,7 @@ class UserRoleBindingFactory extends Factory
     {
         return $this->state(function (array $attrs) {
             $store = Store::factory()->create(['tenant_id' => $attrs['tenant_id']]);
+
             return ['store_id' => $store->id];
         });
     }

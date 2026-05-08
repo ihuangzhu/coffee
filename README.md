@@ -86,3 +86,30 @@ app/
 - 设计：`docs/superpowers/specs/2026-05-07-identity-skeleton-design.md`
 - 实施计划：`docs/superpowers/plans/2026-05-08-identity-skeleton-implementation.md`
 - base.md：`docs/base.md`（设计来源）
+
+## RBAC（首期 minimal）
+
+权限模型按 `docs/superpowers/specs/2026-05-08-rbac-design.md` 实现：
+
+- 4 张表：roles / platform_roles / user_role_bindings / users.platform_role_id
+- 2 个 enum：Permission（商户域 6 个）/ PlatformPermission（平台域 6 个）
+- 双中间件：`permission:roles.manage` / `platform_permission:platform.tenants.manage`
+- 6 个内置预设角色（migrate 时 seed）：
+
+| 表 | code | 用途 |
+|---|---|---|
+| roles (全局模板) | TenantAdmin | 商户管理员（全部 6 商户权限） |
+| roles (全局模板) | StoreManager | 店长（读 + roles.read + users.read） |
+| roles (全局模板) | StoreClerk | 店员（读类） |
+| platform_roles | PlatformSuperAdmin | 平台超管（全部 6 平台权限） |
+| platform_roles | PlatformOps | 平台运营（不含 read-only impersonation） |
+| platform_roles | PlatformReadOnly | 仅 read-only impersonation |
+
+**INV 关键**
+
+- INV-A/B：商户 / 平台权限码严格不互通（双 enum + 双 ValidPermissionsRule 校验）
+- INV-C/D：PermissionMiddleware 双路径互斥，`is_platform_impersonation` 一票决定
+- INV-F：scope=tenant ↔ store_id NULL；scope=store ↔ store_id 非 NULL
+- INV-H：is_system=true 角色不可改/删
+
+**dev 数据**：`php artisan db:seed` 后已用 `secret123` 登录的几个账号都已绑预设角色（见 README 速查表）。

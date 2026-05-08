@@ -17,12 +17,14 @@ class PlatformRoleController extends Controller
     public function index(): JsonResponse
     {
         $roles = PlatformRole::query()->orderBy('is_system', 'desc')->orderBy('name')->get();
+
         return response()->json(['roles' => $roles]);
     }
 
     public function store(StorePlatformRoleRequest $request): JsonResponse
     {
         $role = PlatformRole::query()->create($request->validated() + ['is_system' => false]);
+
         return response()->json(['role' => $role], 201);
     }
 
@@ -33,6 +35,7 @@ class PlatformRoleController extends Controller
             throw new BusinessException('role.system-locked', '系统内置角色不可修改', 403);
         }
         $role->fill($request->validated())->save();
+
         return response()->json(['role' => $role]);
     }
 
@@ -47,6 +50,7 @@ class PlatformRoleController extends Controller
             throw new BusinessException('role.in-use', '角色被用户引用，无法删除', 409, ['user_count' => $userCount]);
         }
         $role->delete();
+
         return response()->json(null, 204);
     }
 }

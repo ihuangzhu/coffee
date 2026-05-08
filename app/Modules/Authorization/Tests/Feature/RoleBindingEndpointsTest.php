@@ -21,6 +21,7 @@ function asUserWithAssignRole(): array
     $role = Role::factory()->create(['tenant_id' => $t->id, 'permissions' => ['users.assign-role']]);
     UserRoleBinding::factory()->create(['user_id' => $actor->id, 'role_id' => $role->id, 'tenant_id' => $t->id]);
     Sanctum::actingAs($actor);
+
     return ['actor' => $actor, 'tenant' => $t];
 }
 

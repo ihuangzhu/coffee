@@ -70,6 +70,7 @@ class RoleBindingController extends Controller
                     'granted_by' => $request->user()->id,
                     'granted_at' => now(),
                 ]);
+
                 return response()->json(['binding' => $existing], 200);
             }
 
@@ -97,6 +98,7 @@ class RoleBindingController extends Controller
         }
 
         $binding->update(['status' => 'revoked']);
+
         return response()->json(null, 204);
     }
 }

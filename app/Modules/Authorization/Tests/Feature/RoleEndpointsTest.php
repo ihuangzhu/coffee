@@ -20,6 +20,7 @@ function actAsMemberWith(array $perms): array
     $r = Role::factory()->create(['tenant_id' => $t->id, 'permissions' => $perms]);
     UserRoleBinding::factory()->create(['user_id' => $u->id, 'role_id' => $r->id, 'tenant_id' => $t->id]);
     Sanctum::actingAs($u);
+
     return ['user' => $u, 'tenant' => $t];
 }
 

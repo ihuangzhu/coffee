@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenancy\Http\Controllers\Platform;
 
-use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Models\Membership;
+use App\Modules\Identity\Models\User;
 use App\Modules\Tenancy\Models\Store;
 use App\Modules\Tenancy\Models\Tenant;
 use Illuminate\Http\JsonResponse;

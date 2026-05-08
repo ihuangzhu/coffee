@@ -12,10 +12,10 @@ namespace App\Modules\Authorization\Enums;
  */
 enum Permission: string
 {
-    case RolesRead       = 'roles.read';
-    case RolesManage     = 'roles.manage';
-    case UsersRead       = 'users.read';
+    case RolesRead = 'roles.read';
+    case RolesManage = 'roles.manage';
+    case UsersRead = 'users.read';
     case UsersAssignRole = 'users.assign-role';
-    case TenantRead      = 'tenant.read';
-    case StoresRead      = 'stores.read';
+    case TenantRead = 'tenant.read';
+    case StoresRead = 'stores.read';
 }

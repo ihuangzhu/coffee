@@ -46,6 +46,7 @@ class PermissionResolver
 
         $list = array_keys($perms);
         sort($list);
+
         return $list;
     }
 

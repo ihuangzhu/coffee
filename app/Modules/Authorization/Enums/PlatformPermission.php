@@ -14,10 +14,10 @@ namespace App\Modules\Authorization\Enums;
  */
 enum PlatformPermission: string
 {
-    case ImpersonateFull     = 'platform.impersonate.full';
+    case ImpersonateFull = 'platform.impersonate.full';
     case ImpersonateReadOnly = 'platform.impersonate.read-only';
-    case TenantsManage       = 'platform.tenants.manage';
-    case StoresManage        = 'platform.stores.manage';
-    case UsersManage         = 'platform.users.manage';
+    case TenantsManage = 'platform.tenants.manage';
+    case StoresManage = 'platform.stores.manage';
+    case UsersManage = 'platform.users.manage';
     case PlatformRolesManage = 'platform.roles.manage';
 }

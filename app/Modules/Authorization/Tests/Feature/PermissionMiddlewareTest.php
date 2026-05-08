@@ -23,6 +23,7 @@ function prep_member(array $perms, string $scope = 'tenant'): array
     Membership::factory()->create(['user_id' => $u->id, 'tenant_id' => $t->id]);
     $r = Role::factory()->create(['tenant_id' => $t->id, 'permissions' => $perms, 'scope' => $scope]);
     UserRoleBinding::factory()->create(['user_id' => $u->id, 'role_id' => $r->id, 'tenant_id' => $t->id]);
+
     return ['user' => $u, 'tenant' => $t];
 }
 
@@ -32,6 +33,7 @@ function prep_platform_admin(array $perms): array
     $pr = PlatformRole::factory()->create(['permissions' => $perms]);
     $u->update(['platform_role_id' => $pr->id]);
     $t = Tenant::factory()->create();
+
     return ['user' => $u, 'tenant' => $t];
 }
 

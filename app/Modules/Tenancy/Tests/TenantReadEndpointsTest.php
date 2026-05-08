@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Models\Membership;
+use App\Modules\Identity\Models\User;
 use App\Modules\Tenancy\Models\Store;
 use App\Modules\Tenancy\Models\Tenant;
 use App\Support\Tenancy\CurrentTenant;

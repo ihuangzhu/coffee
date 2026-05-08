@@ -34,6 +34,7 @@ class UserPlatformRoleController extends Controller
         }
 
         $target->update(['platform_role_id' => $data['platform_role_id']]);
+
         return response()->json(['user' => $target->only(['id', 'name', 'platform_role_id'])]);
     }
 }
