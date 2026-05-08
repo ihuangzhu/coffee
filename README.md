@@ -23,7 +23,11 @@ php artisan key:generate
 touch database/database.sqlite
 php artisan migrate
 
-# 创建首个平台员工
+# 一键填充开发数据（含平台员工 + 2 租户 + 4 门店 + 多个员工与 memberships）
+php artisan db:seed
+# 重置并重填：php artisan migrate:fresh --seed
+
+# 也可单独创建首个平台员工（不需要 seeder 时）
 php artisan coffee:bootstrap --phone=13800000000 --password=secret123
 
 # 启动开发环境（后端 + 队列 + 日志 + 前端）
@@ -35,6 +39,16 @@ composer dev
 1. 访问 http://localhost:8000/login，用平台员工 13800000000 登录。
 2. 平台员工通过 curl/Postman 调 `/api/platform/tenants` 创建租户、`/api/platform/tenants/{id}/users` 创建员工。
 3. 用员工账号登录，进入 `/select-tenant` 选择租户，进入主页。
+
+> 已跑 `db:seed` 的话，可以直接用以下账号登录（密码统一 `secret123`）：
+>
+> | 角色 | 手机号 | 说明 |
+> | --- | --- | --- |
+> | 平台员工 | `13800000000` | 创建租户/门店/用户 |
+> | 九号咖啡 admin | `13900000001` | 租户级管理员 |
+> | 九号咖啡 徐汇店店长 | `13900000002` | 门店级 |
+> | 九号咖啡 朝阳店店长 | `13900000004` | 门店级 |
+> | 示范咖啡 admin | `13900000011` | 租户级管理员 |
 
 ## 测试
 

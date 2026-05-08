@@ -16,6 +16,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 业务模块 seeder 出现后再填
+        $this->call([
+            // 身份骨架（首期）：平台员工 + 2 租户 + 门店 + 员工 + memberships
+            IdentitySkeletonSeeder::class,
+        ]);
     }
 }
