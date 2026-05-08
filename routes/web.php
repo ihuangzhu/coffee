@@ -1,7 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+declare(strict_types=1);
 
-Route::get('/', function () {
-    return view('welcome');
-});
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+
+Route::get('/login', fn () => Inertia::render('Login'));
+Route::get('/select-tenant', fn () => Inertia::render('SelectTenant'));
+Route::get('/', fn () => Inertia::render('Home'));
