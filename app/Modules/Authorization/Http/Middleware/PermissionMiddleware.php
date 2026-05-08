@@ -47,7 +47,16 @@ class PermissionMiddleware
     private function handlePlatformImpersonation(Request $request, Closure $next)
     {
         $platformRole = $request->attributes->get('platform_role');
-        $perms = $platformRole?->permissions ?? [];
+
+        if (! $platformRole) {
+            throw new BusinessException(
+                'platform.impersonation.no-role',
+                '平台员工尚未分配 platform_role，禁止任何操作',
+                403,
+            );
+        }
+
+        $perms = $platformRole->permissions ?? [];
 
         if (in_array(PlatformPermission::ImpersonateFull->value, $perms, strict: true)) {
             return $next($request);

@@ -98,5 +98,7 @@ test('platform admin 但无 platform_role → 403', function () {
     $u = User::factory()->platformAdmin()->create();
     $t = Tenant::factory()->create();
     Sanctum::actingAs($u);
-    $this->withHeaders(['X-Tenant-Id' => $t->id])->getJson('/api/__perm-probe')->assertStatus(403);
+    $resp = $this->withHeaders(['X-Tenant-Id' => $t->id])->getJson('/api/__perm-probe');
+    $resp->assertStatus(403);
+    expect($resp->json('code'))->toBe('platform.impersonation.no-role');
 });
