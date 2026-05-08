@@ -33,4 +33,7 @@ Route::prefix('api/platform')->middleware(['auth:sanctum', 'platform_admin'])->g
         ->middleware('platform_permission:platform.roles.manage');
     Route::delete('roles/{id}', [\App\Modules\Authorization\Http\Controllers\Platform\PlatformRoleController::class, 'destroy'])
         ->middleware('platform_permission:platform.roles.manage');
+    Route::patch('users/{userId}/platform-role', [
+        \App\Modules\Authorization\Http\Controllers\Platform\UserPlatformRoleController::class, 'update'
+    ])->middleware('platform_permission:platform.roles.manage');
 });
