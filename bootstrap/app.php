@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Identity\Http\Middleware\TenantMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,7 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            // tenant + platform_admin 由 Task 8/12 实现后再填入
+            'tenant' => TenantMiddleware::class,
+            // platform_admin 由 Task 12 实现
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
