@@ -149,3 +149,12 @@ test('DELETE /api/roles/{id} is_system=true → 403 role.system-locked', functio
     $resp = $this->withHeaders(['X-Tenant-Id' => $t->id])->deleteJson("/api/roles/{$r->id}");
     $resp->assertStatus(403);
 });
+
+test('DELETE /api/roles/{id} 别租户角色 → 404（隐藏存在性）', function () {
+    ['tenant' => $t] = actAsMemberWith(['roles.manage']);
+    $other = Tenant::factory()->create();
+    $r = Role::factory()->create(['tenant_id' => $other->id]);
+
+    $this->withHeaders(['X-Tenant-Id' => $t->id])
+        ->deleteJson("/api/roles/{$r->id}")->assertStatus(404);
+});

@@ -110,13 +110,16 @@ class RoleController extends Controller
         }
 
         // 删除 revoked 绑定留痕（FK restrictOnDelete，revoked 不算占用但需先清理）
-        \App\Modules\Authorization\Models\UserRoleBinding::query()
-            ->withoutGlobalScopes()
-            ->where('role_id', $roleId)
-            ->where('status', 'revoked')
-            ->delete();
+        \Illuminate\Support\Facades\DB::transaction(function () use ($role, $roleId) {
+            \App\Modules\Authorization\Models\UserRoleBinding::query()
+                ->withoutGlobalScopes()
+                ->where('role_id', $roleId)
+                ->where('status', 'revoked')
+                ->delete();
 
-        $role->delete();
+            $role->delete();
+        });
+
         return response()->json(null, 204);
     }
 }
