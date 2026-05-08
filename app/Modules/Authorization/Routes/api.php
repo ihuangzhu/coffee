@@ -23,3 +23,14 @@ Route::prefix('api')->middleware(['auth:sanctum', 'tenant'])->group(function () 
     Route::delete('role-bindings/{bindingId}', [RoleBindingController::class, 'destroy'])
         ->middleware('permission:users.assign-role');
 });
+
+Route::prefix('api/platform')->middleware(['auth:sanctum', 'platform_admin'])->group(function () {
+    Route::get('roles', [\App\Modules\Authorization\Http\Controllers\Platform\PlatformRoleController::class, 'index'])
+        ->middleware('platform_permission:platform.roles.manage');
+    Route::post('roles', [\App\Modules\Authorization\Http\Controllers\Platform\PlatformRoleController::class, 'store'])
+        ->middleware('platform_permission:platform.roles.manage');
+    Route::patch('roles/{id}', [\App\Modules\Authorization\Http\Controllers\Platform\PlatformRoleController::class, 'update'])
+        ->middleware('platform_permission:platform.roles.manage');
+    Route::delete('roles/{id}', [\App\Modules\Authorization\Http\Controllers\Platform\PlatformRoleController::class, 'destroy'])
+        ->middleware('platform_permission:platform.roles.manage');
+});
