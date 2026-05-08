@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Identity\Http\Controllers\AuthController;
+use App\Modules\Identity\Http\Controllers\MeController;
 use App\Support\Tenancy\CurrentTenant;
 use Illuminate\Support\Facades\Route;
 
@@ -30,4 +31,10 @@ Route::prefix('api/auth')->group(function () {
 // 已登录但不要求 tenant：登出
 Route::prefix('api/auth')->middleware('auth:sanctum')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
+});
+
+// 已登录但不要求 tenant：我的身份与所属租户列表
+Route::prefix('api')->middleware('auth:sanctum')->group(function () {
+    Route::get('me', [MeController::class, 'show']);
+    Route::get('me/memberships', [MeController::class, 'memberships']);
 });
