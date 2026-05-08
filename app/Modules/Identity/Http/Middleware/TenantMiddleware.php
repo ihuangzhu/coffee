@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Identity\Http\Middleware;
 
-use App\Modules\Identity\Models\UserOrgRel;
+use App\Modules\Identity\Models\Membership;
 use App\Support\Tenancy\CurrentMembership;
 use App\Support\Tenancy\CurrentTenant;
 use Closure;
@@ -17,7 +17,7 @@ use Illuminate\Http\Request;
  *   1. 强制 X-Tenant-Id header 存在（否则 403）
  *   2. 平台员工（is_platform_admin=true）→ 直接信任 header，注入 CurrentTenant
  *      并标记 is_platform_impersonation=true（具体能否做事由后续 PermissionMiddleware 判定）
- *   3. 普通员工 → 必须在该 tenant 拥有 status=active 的 user_org_rel；否则 403
+ *   3. 普通员工 → 必须在该 tenant 拥有 status=active 的 membership；否则 403
  *   4. 通过后，CurrentTenant / CurrentMembership / request attributes 全部就绪
  *
  * 必须挂在 auth:sanctum 之后；后续 permission middleware 必须挂在本中间件之后。
@@ -48,7 +48,7 @@ class TenantMiddleware
 
         // 显式 withoutGlobalScopes：membership 是"该 user 在该 tenant 是否有绑定"的元数据查询，
         // 不应受 BelongsToTenant 全局 scope 限制（CurrentTenant 此时可能仍是上一次请求残留值）。
-        $membership = UserOrgRel::query()
+        $membership = Membership::query()
             ->withoutGlobalScopes()
             ->where('user_id', $user->id)
             ->where('tenant_id', $tenantId)

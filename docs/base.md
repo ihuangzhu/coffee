@@ -349,7 +349,7 @@ SaaS 服务提供方，负责整个系统运营。
 - phone
 - status
 
-### `user_org_rel`
+### `membership`
 - id
 - user_id
 - tenant_id
@@ -542,7 +542,7 @@ SaaS 服务提供方，负责整个系统运营。
 
 ## 身份模型
 - user：用户基础身份
-- user_org_rel：用户与商户/门店关系
+- membership：用户与商户/门店关系
 
 ## 权限模型
 - permission：权限点

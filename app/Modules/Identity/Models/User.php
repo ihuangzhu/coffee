@@ -15,7 +15,7 @@ use Laravel\Sanctum\HasApiTokens;
  * 全局身份模型（不挂 BelongsToTenant，跨租户单一身份）。
  *
  * - phone 全局唯一登录账号
- * - 与租户的关系迁出至 user_org_rels 中间表（Task 7 引入）
+ * - 与租户的关系迁出至 memberships 中间表（Task 7 引入）
  * - is_platform_admin = true → 平台员工，仅 CLI 可置（coffee:bootstrap）
  */
 class User extends Authenticatable
@@ -38,7 +38,7 @@ class User extends Authenticatable
 
     public function memberships(): HasMany
     {
-        return $this->hasMany(UserOrgRel::class);
+        return $this->hasMany(Membership::class);
     }
 
     protected static function newFactory(): UserFactory

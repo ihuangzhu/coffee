@@ -10,7 +10,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('user_org_rels', function (Blueprint $table) {
+        Schema::create('memberships', function (Blueprint $table) {
             $table->char('id', 26)->primary();
             $table->char('user_id', 26);
             $table->char('tenant_id', 26);
@@ -29,6 +29,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('user_org_rels');
+        Schema::dropIfExists('memberships');
     }
 };

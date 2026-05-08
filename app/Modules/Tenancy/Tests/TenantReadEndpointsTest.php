@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Identity\Models\User;
-use App\Modules\Identity\Models\UserOrgRel;
+use App\Modules\Identity\Models\Membership;
 use App\Modules\Tenancy\Models\Store;
 use App\Modules\Tenancy\Models\Tenant;
 use App\Support\Tenancy\CurrentTenant;
@@ -19,7 +19,7 @@ afterEach(function () {
 test('GET /api/tenants/current 返回 X-Tenant-Id 对应租户', function () {
     $u = User::factory()->create();
     $t = Tenant::factory()->create(['name' => '示范咖啡']);
-    UserOrgRel::factory()->create(['user_id' => $u->id, 'tenant_id' => $t->id]);
+    Membership::factory()->create(['user_id' => $u->id, 'tenant_id' => $t->id]);
     Sanctum::actingAs($u);
 
     $this->withHeaders(['X-Tenant-Id' => $t->id])
@@ -32,7 +32,7 @@ test('GET /api/stores 仅返回当前租户 stores（跨租户隔离）', functi
     $u = User::factory()->create();
     $tA = Tenant::factory()->create();
     $tB = Tenant::factory()->create();
-    UserOrgRel::factory()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
+    Membership::factory()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
 
     Store::factory()->create(['tenant_id' => $tA->id, 'name' => 'A1 店']);
     Store::factory()->create(['tenant_id' => $tA->id, 'name' => 'A2 店']);
@@ -50,7 +50,7 @@ test('普通 user 用未绑定租户的 X-Tenant-Id 调 /api/stores 收 403', fu
     $u = User::factory()->create();
     $tA = Tenant::factory()->create();
     $tB = Tenant::factory()->create();
-    UserOrgRel::factory()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
+    Membership::factory()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
     Store::factory()->create(['tenant_id' => $tB->id]);
 
     Sanctum::actingAs($u);

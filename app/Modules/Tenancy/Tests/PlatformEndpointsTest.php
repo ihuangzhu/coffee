@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Identity\Models\User;
-use App\Modules\Identity\Models\UserOrgRel;
+use App\Modules\Identity\Models\Membership;
 use App\Modules\Tenancy\Models\Store;
 use App\Modules\Tenancy\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -60,7 +60,7 @@ test('platform admin 创建 user 并绑定 tenant 级 membership', function () {
     $resp->assertStatus(201);
 
     $newUser = User::where('phone', '13800001111')->firstOrFail();
-    $rel = UserOrgRel::query()->withoutGlobalScopes()->where('user_id', $newUser->id)->first();
+    $rel = Membership::query()->withoutGlobalScopes()->where('user_id', $newUser->id)->first();
     expect($rel)->not->toBeNull();
     expect($rel->tenant_id)->toBe($t->id);
     expect($rel->store_id)->toBeNull();
@@ -80,7 +80,7 @@ test('platform admin 创建 user 并绑定 store 级 membership', function () {
         'store_id' => $s->id,
     ])->assertStatus(201);
 
-    $rel = UserOrgRel::query()->withoutGlobalScopes()
+    $rel = Membership::query()->withoutGlobalScopes()
         ->where('tenant_id', $t->id)
         ->whereNotNull('store_id')
         ->first();

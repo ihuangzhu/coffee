@@ -26,7 +26,7 @@
 | `Merchant` / `merchant_id` / `merchants` | `Tenant` / `tenant_id` / `tenants` | 全文 |
 | `BelongsToMerchant` / `MerchantScope` | `BelongsToTenant` / `TenantScope` | trait/scope |
 | `CurrentMerchant` | `CurrentTenant` | Tenancy 单例 |
-| `MerchantUser` | `UserOrgRel` | 关系表 |
+| `MerchantUser` | `Membership` | 关系表 |
 | `X-Merchant-Id` header | `X-Tenant-Id` header | TenantMiddleware |
 | `app/Modules/Auth` | `app/Modules/Identity` | 模块根 |
 | `app/Modules/Merchant` | `app/Modules/Tenancy` | 模块根 |
@@ -324,7 +324,7 @@ class CurrentTenant
 
 注：Laravel 默认在每个 HTTP 请求会重置容器，但**测试中** `RefreshDatabase` + 多请求共用同一容器时 `CurrentTenant` 可能跨请求残留 → 这正是 Task 8 `withoutGlobalScopes` 防御的原因。
 
-- [ ] **Step 3.3: 写 CurrentMembership 单例（持有 UserOrgRel 实例或 null）**
+- [ ] **Step 3.3: 写 CurrentMembership 单例（持有 Membership 实例或 null）**
 
 写 `<root>/app/Support/Tenancy/CurrentMembership.php`：
 
@@ -335,25 +335,25 @@ declare(strict_types=1);
 
 namespace App\Support\Tenancy;
 
-use App\Modules\Identity\Models\UserOrgRel;
+use App\Modules\Identity\Models\Membership;
 
 class CurrentMembership
 {
-    private ?UserOrgRel $membership = null;
+    private ?Membership $membership = null;
 
-    public function set(?UserOrgRel $membership): void
+    public function set(?Membership $membership): void
     {
         $this->membership = $membership;
     }
 
-    public function get(): ?UserOrgRel
+    public function get(): ?Membership
     {
         return $this->membership;
     }
 }
 ```
 
-注：此处引用了 Task 7 才定义的 `UserOrgRel`。在 Task 7 完成前，本类不会被实例化（即使 `composer dump-autoload` 生成元数据，PHP 不会真正加载该 class）。如果 IDE 报 unresolved symbol，**忽略**——是预期。
+注：此处引用了 Task 7 才定义的 `Membership`。在 Task 7 完成前，本类不会被实例化（即使 `composer dump-autoload` 生成元数据，PHP 不会真正加载该 class）。如果 IDE 报 unresolved symbol，**忽略**——是预期。
 
 - [ ] **Step 3.4: 写 TenantScope**
 
@@ -1005,7 +1005,7 @@ class User extends Authenticatable
 
     public function memberships(): HasMany
     {
-        return $this->hasMany(UserOrgRel::class);
+        return $this->hasMany(Membership::class);
     }
 
     protected static function newFactory(): UserFactory
@@ -1149,21 +1149,21 @@ git commit -m "feat(identity): 新增 User 实体与 Sanctum 接入"
 
 ---
 
-## Task 7: Identity 模块 - UserOrgRel（含 withoutGlobalScopes 模式测试）
+## Task 7: Identity 模块 - Membership（含 withoutGlobalScopes 模式测试）
 
 **Spec:** §3.4 + §5.3 注
 
 **Files:**
-- Create: `<root>/app/Modules/Identity/Models/UserOrgRel.php`
-- Create: `<root>/app/Modules/Identity/Database/Migrations/2026_05_08_000040_create_user_org_rels_table.php`
-- Create: `<root>/app/Modules/Identity/Database/Factories/UserOrgRelFactory.php`
-- Create: `<root>/app/Modules/Identity/Tests/UserOrgRelTest.php`
+- Create: `<root>/app/Modules/Identity/Models/Membership.php`
+- Create: `<root>/app/Modules/Identity/Database/Migrations/2026_05_08_000040_create_memberships_table.php`
+- Create: `<root>/app/Modules/Identity/Database/Factories/MembershipFactory.php`
+- Create: `<root>/app/Modules/Identity/Tests/MembershipTest.php`
 
 - [ ] **Step 7.1: 迁移**
 
 ```php
 <?php
-// <root>/app/Modules/Identity/Database/Migrations/2026_05_08_000040_create_user_org_rels_table.php
+// <root>/app/Modules/Identity/Database/Migrations/2026_05_08_000040_create_memberships_table.php
 declare(strict_types=1);
 
 use Illuminate\Database\Migrations\Migration;
@@ -1173,7 +1173,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('user_org_rels', function (Blueprint $table) {
+        Schema::create('memberships', function (Blueprint $table) {
             $table->char('id', 26)->primary();
             $table->char('user_id', 26);
             $table->char('tenant_id', 26);
@@ -1192,7 +1192,7 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::dropIfExists('user_org_rels');
+        Schema::dropIfExists('memberships');
     }
 };
 ```
@@ -1201,12 +1201,12 @@ return new class extends Migration {
 
 ```php
 <?php
-// <root>/app/Modules/Identity/Models/UserOrgRel.php
+// <root>/app/Modules/Identity/Models/Membership.php
 declare(strict_types=1);
 
 namespace App\Modules\Identity\Models;
 
-use App\Modules\Identity\Database\Factories\UserOrgRelFactory;
+use App\Modules\Identity\Database\Factories\MembershipFactory;
 use App\Modules\Tenancy\Models\Store;
 use App\Modules\Tenancy\Models\Tenant;
 use App\Support\Eloquent\BelongsToTenant;
@@ -1215,13 +1215,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class UserOrgRel extends Model
+class Membership extends Model
 {
     use BelongsToTenant;
     use HasFactory;
     use HasUlid;
 
-    protected $table = 'user_org_rels';
+    protected $table = 'memberships';
     protected $guarded = [];
 
     protected $casts = [
@@ -1243,9 +1243,9 @@ class UserOrgRel extends Model
         return $this->belongsTo(Store::class);
     }
 
-    protected static function newFactory(): UserOrgRelFactory
+    protected static function newFactory(): MembershipFactory
     {
-        return UserOrgRelFactory::new();
+        return MembershipFactory::new();
     }
 }
 ```
@@ -1254,19 +1254,19 @@ class UserOrgRel extends Model
 
 ```php
 <?php
-// <root>/app/Modules/Identity/Database/Factories/UserOrgRelFactory.php
+// <root>/app/Modules/Identity/Database/Factories/MembershipFactory.php
 declare(strict_types=1);
 
 namespace App\Modules\Identity\Database\Factories;
 
 use App\Modules\Identity\Models\User;
-use App\Modules\Identity\Models\UserOrgRel;
+use App\Modules\Identity\Models\Membership;
 use App\Modules\Tenancy\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class UserOrgRelFactory extends Factory
+class MembershipFactory extends Factory
 {
-    protected $model = UserOrgRel::class;
+    protected $model = Membership::class;
 
     public function definition(): array
     {
@@ -1288,7 +1288,7 @@ class UserOrgRelFactory extends Factory
 
 - [ ] **Step 7.4: 测试跨租户查询模式**
 
-写 `<root>/app/Modules/Identity/Tests/UserOrgRelTest.php`：
+写 `<root>/app/Modules/Identity/Tests/MembershipTest.php`：
 
 ```php
 <?php
@@ -1296,7 +1296,7 @@ class UserOrgRelFactory extends Factory
 declare(strict_types=1);
 
 use App\Modules\Identity\Models\User;
-use App\Modules\Identity\Models\UserOrgRel;
+use App\Modules\Identity\Models\Membership;
 use App\Modules\Tenancy\Models\Tenant;
 use App\Support\Tenancy\CurrentTenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -1309,13 +1309,13 @@ afterEach(function () {
 
 test('user 关系返回正确 user', function () {
     $u = User::factory()->create();
-    $rel = UserOrgRel::factory()->create(['user_id' => $u->id]);
+    $rel = Membership::factory()->create(['user_id' => $u->id]);
     expect($rel->user->id)->toBe($u->id);
 });
 
 test('user.memberships 反向关系', function () {
     $u = User::factory()->create();
-    UserOrgRel::factory()->count(2)->create(['user_id' => $u->id]);
+    Membership::factory()->count(2)->create(['user_id' => $u->id]);
     expect($u->memberships)->toHaveCount(2);
 });
 
@@ -1323,40 +1323,40 @@ test('CurrentTenant 设置后默认 scope 仅返回当前租户的 rels', functi
     $u = User::factory()->create();
     $tA = Tenant::factory()->create();
     $tB = Tenant::factory()->create();
-    UserOrgRel::factory()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
-    UserOrgRel::factory()->create(['user_id' => $u->id, 'tenant_id' => $tB->id]);
+    Membership::factory()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
+    Membership::factory()->create(['user_id' => $u->id, 'tenant_id' => $tB->id]);
 
     app(CurrentTenant::class)->set($tA->id);
-    expect(UserOrgRel::query()->where('user_id', $u->id)->count())->toBe(1);
+    expect(Membership::query()->where('user_id', $u->id)->count())->toBe(1);
 });
 
 test('withoutGlobalScopes 可跨租户列出 user 全部 memberships', function () {
     $u = User::factory()->create();
     $tA = Tenant::factory()->create();
     $tB = Tenant::factory()->create();
-    UserOrgRel::factory()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
-    UserOrgRel::factory()->create(['user_id' => $u->id, 'tenant_id' => $tB->id]);
+    Membership::factory()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
+    Membership::factory()->create(['user_id' => $u->id, 'tenant_id' => $tB->id]);
 
     app(CurrentTenant::class)->set($tA->id);
     expect(
-        UserOrgRel::query()->withoutGlobalScopes()->where('user_id', $u->id)->count()
+        Membership::query()->withoutGlobalScopes()->where('user_id', $u->id)->count()
     )->toBe(2);
 });
 
 test('store_id 可空表示租户级成员', function () {
-    $rel = UserOrgRel::factory()->create(['store_id' => null]);
+    $rel = Membership::factory()->create(['store_id' => null]);
     expect($rel->store_id)->toBeNull();
 });
 ```
 
-Run: `cd <root> && ./vendor/bin/pest app/Modules/Identity/Tests/UserOrgRelTest.php`
+Run: `cd <root> && ./vendor/bin/pest app/Modules/Identity/Tests/MembershipTest.php`
 Expected: 5 passed.
 
 - [ ] **Step 7.5: Commit**
 
 ```bash
 git add app/Modules/Identity
-git commit -m "feat(identity): 新增 UserOrgRel 关系表（验证 withoutGlobalScopes 跨租户查询模式）"
+git commit -m "feat(identity): 新增 Membership 关系表（验证 withoutGlobalScopes 跨租户查询模式）"
 ```
 
 ---
@@ -1371,7 +1371,7 @@ git commit -m "feat(identity): 新增 UserOrgRel 关系表（验证 withoutGloba
 - Create: `<root>/app/Modules/Identity/Routes/api.php`（占位 GET 路由用于测试中间件）
 - Create: `<root>/app/Modules/Identity/Tests/TenantMiddlewareTest.php`
 
-- [ ] **Step 8.1: 写 TenantMiddleware（基于 supermarket，改名为 UserOrgRel + Tenant）**
+- [ ] **Step 8.1: 写 TenantMiddleware（基于 supermarket，改名为 Membership + Tenant）**
 
 ```php
 <?php
@@ -1380,7 +1380,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Identity\Http\Middleware;
 
-use App\Modules\Identity\Models\UserOrgRel;
+use App\Modules\Identity\Models\Membership;
 use App\Support\Tenancy\CurrentMembership;
 use App\Support\Tenancy\CurrentTenant;
 use Closure;
@@ -1409,7 +1409,7 @@ class TenantMiddleware
             return $next($request);
         }
 
-        $membership = UserOrgRel::query()
+        $membership = Membership::query()
             ->withoutGlobalScopes()
             ->where('user_id', $user->id)
             ->where('tenant_id', $tenantId)
@@ -1471,7 +1471,7 @@ Route::prefix('api')->middleware(['auth:sanctum', 'tenant'])->group(function () 
 declare(strict_types=1);
 
 use App\Modules\Identity\Models\User;
-use App\Modules\Identity\Models\UserOrgRel;
+use App\Modules\Identity\Models\Membership;
 use App\Modules\Tenancy\Models\Tenant;
 use App\Support\Tenancy\CurrentTenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -1511,7 +1511,7 @@ test('普通 user 在该 tenant 没有 active membership 返回 403', function (
 test('普通 user 有 active membership 通过', function () {
     $u = User::factory()->create();
     $t = Tenant::factory()->create();
-    UserOrgRel::factory()->create([
+    Membership::factory()->create([
         'user_id' => $u->id, 'tenant_id' => $t->id, 'status' => 'active',
     ]);
     Sanctum::actingAs($u);
@@ -1542,7 +1542,7 @@ test('platform admin 任意 X-Tenant-Id 通过且标 impersonation', function ()
 test('membership.status=left 返回 403', function () {
     $u = User::factory()->create();
     $t = Tenant::factory()->create();
-    UserOrgRel::factory()->left()->create([
+    Membership::factory()->left()->create([
         'user_id' => $u->id, 'tenant_id' => $t->id,
     ]);
     Sanctum::actingAs($u);
@@ -1837,7 +1837,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Identity\Http\Controllers;
 
-use App\Modules\Identity\Models\UserOrgRel;
+use App\Modules\Identity\Models\Membership;
 use App\Modules\Tenancy\Models\Tenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -1861,7 +1861,7 @@ class MeController extends Controller
     {
         $user = $request->user();
 
-        $memberships = UserOrgRel::query()
+        $memberships = Membership::query()
             ->withoutGlobalScopes()
             ->where('user_id', $user->id)
             ->where('status', 'active')
@@ -1873,7 +1873,7 @@ class MeController extends Controller
             ->get()
             ->keyBy('id');
 
-        $list = $memberships->map(function (UserOrgRel $m) use ($tenants) {
+        $list = $memberships->map(function (Membership $m) use ($tenants) {
             $tenant = $tenants->get($m->tenant_id);
             return [
                 'tenant_id' => $m->tenant_id,
@@ -1909,7 +1909,7 @@ Route::prefix('api')->middleware('auth:sanctum')->group(function () {
 declare(strict_types=1);
 
 use App\Modules\Identity\Models\User;
-use App\Modules\Identity\Models\UserOrgRel;
+use App\Modules\Identity\Models\Membership;
 use App\Modules\Tenancy\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -1937,9 +1937,9 @@ test('GET /api/me/memberships 列出所有 active rels（跨租户）', function
     $u = User::factory()->create();
     $tA = Tenant::factory()->create(['name' => 'A咖啡']);
     $tB = Tenant::factory()->create(['name' => 'B咖啡']);
-    UserOrgRel::factory()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
-    UserOrgRel::factory()->create(['user_id' => $u->id, 'tenant_id' => $tB->id]);
-    UserOrgRel::factory()->left()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
+    Membership::factory()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
+    Membership::factory()->create(['user_id' => $u->id, 'tenant_id' => $tB->id]);
+    Membership::factory()->left()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
 
     Sanctum::actingAs($u);
 
@@ -1951,7 +1951,7 @@ test('GET /api/me/memberships 列出所有 active rels（跨租户）', function
 
 test('GET /api/me/memberships 不返回 status=left 的', function () {
     $u = User::factory()->create();
-    UserOrgRel::factory()->left()->create(['user_id' => $u->id]);
+    Membership::factory()->left()->create(['user_id' => $u->id]);
     Sanctum::actingAs($u);
 
     expect($this->getJson('/api/me/memberships')->json('memberships'))->toHaveCount(0);
@@ -2064,7 +2064,7 @@ Route::prefix('api')->middleware(['auth:sanctum', 'tenant'])->group(function () 
 declare(strict_types=1);
 
 use App\Modules\Identity\Models\User;
-use App\Modules\Identity\Models\UserOrgRel;
+use App\Modules\Identity\Models\Membership;
 use App\Modules\Tenancy\Models\Store;
 use App\Modules\Tenancy\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -2075,7 +2075,7 @@ uses(RefreshDatabase::class);
 test('GET /api/tenants/current 返回 X-Tenant-Id 对应租户', function () {
     $u = User::factory()->create();
     $t = Tenant::factory()->create(['name' => '示范咖啡']);
-    UserOrgRel::factory()->create(['user_id' => $u->id, 'tenant_id' => $t->id]);
+    Membership::factory()->create(['user_id' => $u->id, 'tenant_id' => $t->id]);
     Sanctum::actingAs($u);
 
     $this->withHeaders(['X-Tenant-Id' => $t->id])
@@ -2088,7 +2088,7 @@ test('GET /api/stores 仅返回当前租户 stores（跨租户隔离）', functi
     $u = User::factory()->create();
     $tA = Tenant::factory()->create();
     $tB = Tenant::factory()->create();
-    UserOrgRel::factory()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
+    Membership::factory()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
 
     Store::factory()->create(['tenant_id' => $tA->id, 'name' => 'A1 店']);
     Store::factory()->create(['tenant_id' => $tA->id, 'name' => 'A2 店']);
@@ -2106,7 +2106,7 @@ test('普通 user 用未绑定租户的 X-Tenant-Id 调 /api/stores 收 403', fu
     $u = User::factory()->create();
     $tA = Tenant::factory()->create();
     $tB = Tenant::factory()->create();
-    UserOrgRel::factory()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
+    Membership::factory()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
     Store::factory()->create(['tenant_id' => $tB->id]);
 
     Sanctum::actingAs($u);
@@ -2280,7 +2280,7 @@ declare(strict_types=1);
 namespace App\Modules\Tenancy\Http\Controllers\Platform;
 
 use App\Modules\Identity\Models\User;
-use App\Modules\Identity\Models\UserOrgRel;
+use App\Modules\Identity\Models\Membership;
 use App\Modules\Tenancy\Models\Store;
 use App\Modules\Tenancy\Models\Tenant;
 use Illuminate\Http\JsonResponse;
@@ -2316,7 +2316,7 @@ class PlatformUserController extends Controller
                 'status' => 'active',
             ]);
 
-            $rel = UserOrgRel::query()->withoutGlobalScopes()->create([
+            $rel = Membership::query()->withoutGlobalScopes()->create([
                 'user_id' => $user->id,
                 'tenant_id' => $tenant->id,
                 'store_id' => $data['store_id'] ?? null,
@@ -2361,7 +2361,7 @@ Route::prefix('api/platform')->middleware(['auth:sanctum', 'platform_admin'])->g
 declare(strict_types=1);
 
 use App\Modules\Identity\Models\User;
-use App\Modules\Identity\Models\UserOrgRel;
+use App\Modules\Identity\Models\Membership;
 use App\Modules\Tenancy\Models\Store;
 use App\Modules\Tenancy\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -2418,7 +2418,7 @@ test('platform admin 创建 user 并绑定 tenant 级 membership', function () {
     $resp->assertStatus(201);
 
     $newUser = User::where('phone', '13800001111')->firstOrFail();
-    $rel = UserOrgRel::query()->withoutGlobalScopes()->where('user_id', $newUser->id)->first();
+    $rel = Membership::query()->withoutGlobalScopes()->where('user_id', $newUser->id)->first();
     expect($rel)->not->toBeNull();
     expect($rel->tenant_id)->toBe($t->id);
     expect($rel->store_id)->toBeNull();
@@ -2438,7 +2438,7 @@ test('platform admin 创建 user 并绑定 store 级 membership', function () {
         'store_id' => $s->id,
     ])->assertStatus(201);
 
-    $rel = UserOrgRel::query()->withoutGlobalScopes()
+    $rel = Membership::query()->withoutGlobalScopes()
         ->where('tenant_id', $t->id)
         ->whereNotNull('store_id')
         ->first();
@@ -3038,7 +3038,7 @@ Expected: 全绿，覆盖以下任务的测试：
 - Task 4 TenantTest（3）
 - Task 5 StoreTest（6）
 - Task 6 UserTest（5）
-- Task 7 UserOrgRelTest（5）
+- Task 7 MembershipTest（5）
 - Task 8 TenantMiddlewareTest（6）
 - Task 9 AuthLoginTest（6）
 - Task 10 MeTest（4）
@@ -3150,7 +3150,7 @@ Task 0 (git config 检查)
                     ├─→ Task 4 (Tenant)
                     │     └─→ Task 5 (Store)
                     │           └─→ Task 6 (User)
-                    │                 └─→ Task 7 (UserOrgRel)
+                    │                 └─→ Task 7 (Membership)
                     │                       └─→ Task 8 (TenantMiddleware)
                     │                             └─→ Task 9 (Login)
                     │                                   └─→ Task 10 (Me)
@@ -3169,5 +3169,5 @@ Task 0 (git config 检查)
 
 - ✅ Spec 覆盖：§1~§11 每节都有对应 task；非目标都明确不实现。
 - ✅ 无 placeholder：所有步骤都有实际代码或命令。
-- ✅ 类型一致性：Task 3 定义 `CurrentTenant`、Task 5 起调用 `app(CurrentTenant::class)`，签名一致。`UserOrgRel` 类名 Task 3、7、8、10、12 一致。
+- ✅ 类型一致性：Task 3 定义 `CurrentTenant`、Task 5 起调用 `app(CurrentTenant::class)`，签名一致。`Membership` 类名 Task 3、7、8、10、12 一致。
 - ✅ TDD 节奏：每个数据/逻辑任务先写测试或与代码同步；前端任务的 TDD 弱化（说明合理）。

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Identity\Http\Controllers;
 
-use App\Modules\Identity\Models\UserOrgRel;
+use App\Modules\Identity\Models\Membership;
 use App\Modules\Tenancy\Models\Tenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -36,7 +36,7 @@ class MeController extends Controller
 
         // 跨租户查询自身所有绑定：必须 withoutGlobalScopes 绕过 BelongsToTenant 全局过滤，
         // 否则受 CurrentTenant 限制只能看到当前租户。
-        $memberships = UserOrgRel::query()
+        $memberships = Membership::query()
             ->withoutGlobalScopes()
             ->where('user_id', $user->id)
             ->where('status', 'active')
@@ -49,7 +49,7 @@ class MeController extends Controller
             ->get()
             ->keyBy('id');
 
-        $list = $memberships->map(function (UserOrgRel $m) use ($tenants) {
+        $list = $memberships->map(function (Membership $m) use ($tenants) {
             $tenant = $tenants->get($m->tenant_id);
 
             return [

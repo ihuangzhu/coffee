@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Identity\Models\User;
-use App\Modules\Identity\Models\UserOrgRel;
+use App\Modules\Identity\Models\Membership;
 use App\Modules\Tenancy\Models\Tenant;
 use App\Support\Tenancy\CurrentTenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -43,7 +43,7 @@ test('普通 user 在该 tenant 没有 active membership 返回 403', function (
 test('普通 user 有 active membership 通过', function () {
     $u = User::factory()->create();
     $t = Tenant::factory()->create();
-    UserOrgRel::factory()->create([
+    Membership::factory()->create([
         'user_id' => $u->id, 'tenant_id' => $t->id, 'status' => 'active',
     ]);
     Sanctum::actingAs($u);
@@ -74,7 +74,7 @@ test('platform admin 任意 X-Tenant-Id 通过且标 impersonation', function ()
 test('membership.status=left 返回 403', function () {
     $u = User::factory()->create();
     $t = Tenant::factory()->create();
-    UserOrgRel::factory()->left()->create([
+    Membership::factory()->left()->create([
         'user_id' => $u->id, 'tenant_id' => $t->id,
     ]);
     Sanctum::actingAs($u);

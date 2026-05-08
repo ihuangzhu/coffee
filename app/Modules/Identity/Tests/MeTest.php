@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Identity\Models\User;
-use App\Modules\Identity\Models\UserOrgRel;
+use App\Modules\Identity\Models\Membership;
 use App\Modules\Tenancy\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -31,9 +31,9 @@ test('GET /api/me/memberships 列出所有 active rels（跨租户）', function
     $u = User::factory()->create();
     $tA = Tenant::factory()->create(['name' => 'A咖啡']);
     $tB = Tenant::factory()->create(['name' => 'B咖啡']);
-    UserOrgRel::factory()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
-    UserOrgRel::factory()->create(['user_id' => $u->id, 'tenant_id' => $tB->id]);
-    UserOrgRel::factory()->left()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
+    Membership::factory()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
+    Membership::factory()->create(['user_id' => $u->id, 'tenant_id' => $tB->id]);
+    Membership::factory()->left()->create(['user_id' => $u->id, 'tenant_id' => $tA->id]);
 
     Sanctum::actingAs($u);
 
@@ -45,7 +45,7 @@ test('GET /api/me/memberships 列出所有 active rels（跨租户）', function
 
 test('GET /api/me/memberships 不返回 status=left 的', function () {
     $u = User::factory()->create();
-    UserOrgRel::factory()->left()->create(['user_id' => $u->id]);
+    Membership::factory()->left()->create(['user_id' => $u->id]);
     Sanctum::actingAs($u);
 
     expect($this->getJson('/api/me/memberships')->json('memberships'))->toHaveCount(0);

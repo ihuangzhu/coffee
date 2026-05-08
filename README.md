@@ -6,7 +6,7 @@
 
 首期实现：
 
-- **5 张表**：tenants / stores / users / user_org_rels / personal_access_tokens
+- **5 张表**：tenants / stores / users / memberships / personal_access_tokens
 - **9 个 API 端点**：登录 / 登出 / me / me/memberships / tenants/current / stores / 平台 3 个创建端点
 - **3 个前端页面**：登录 / 选租户 / 主页
 - **1 个 CLI**：`php artisan coffee:bootstrap` 初始化首个平台员工
@@ -58,7 +58,7 @@ npm run build                           # 前端构建
 ```
 app/
   Modules/
-    Identity/  - User + UserOrgRel + 登录/Me/中间件
+    Identity/  - User + Membership + 登录/Me/中间件
     Tenancy/   - Tenant + Store + 平台后台端点
   Support/
     Eloquent/  - HasUlid + BelongsToTenant + TenantScope

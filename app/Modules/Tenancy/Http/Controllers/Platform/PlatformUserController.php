@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Tenancy\Http\Controllers\Platform;
 
 use App\Modules\Identity\Models\User;
-use App\Modules\Identity\Models\UserOrgRel;
+use App\Modules\Identity\Models\Membership;
 use App\Modules\Tenancy\Models\Store;
 use App\Modules\Tenancy\Models\Tenant;
 use Illuminate\Http\JsonResponse;
@@ -42,7 +42,7 @@ class PlatformUserController extends Controller
                 'status' => 'active',
             ]);
 
-            $rel = UserOrgRel::query()->withoutGlobalScopes()->create([
+            $rel = Membership::query()->withoutGlobalScopes()->create([
                 'user_id' => $user->id,
                 'tenant_id' => $tenant->id,
                 'store_id' => $data['store_id'] ?? null,

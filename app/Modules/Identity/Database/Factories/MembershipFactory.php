@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Modules\Identity\Database\Factories;
 
 use App\Modules\Identity\Models\User;
-use App\Modules\Identity\Models\UserOrgRel;
+use App\Modules\Identity\Models\Membership;
 use App\Modules\Tenancy\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class UserOrgRelFactory extends Factory
+class MembershipFactory extends Factory
 {
-    protected $model = UserOrgRel::class;
+    protected $model = Membership::class;
 
     public function definition(): array
     {

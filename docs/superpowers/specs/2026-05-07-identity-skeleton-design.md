@@ -13,7 +13,7 @@
 
 将 supermarket 的"模块化单体 + 多租户基础设施"框架资产移植到 coffee 仓库，并按 base.md §1~§2 / §6.1 的口径实现**最小可跑的多租户身份骨架**：
 
-- Platform / Tenant / Store / User / UserOrgRel 五张概念表（base.md §6.1）
+- Platform / Tenant / Store / User / Membership 五张概念表（base.md §6.1）
 - Sanctum 登录 + `tenant` 中间件（X-Tenant-Id header）
 - `BelongsToTenant` trait + `TenantScope` 全局作用域 + `CurrentTenant` 请求级单例
 - Inertia 登录页 + 切换租户页（最小 UI 验证 happy path）
@@ -50,9 +50,9 @@
 ```
 app/
   Modules/
-    Identity/                          # 身份域（User + UserOrgRel）
+    Identity/                          # 身份域（User + Membership）
       Database/{Migrations,Factories}
-      Models/{User.php, UserOrgRel.php}
+      Models/{User.php, Membership.php}
       Http/{Controllers,Middleware,Requests}
       Services/                        # 跨实体编排（首期可能为空）
       Routes/api.php
@@ -84,7 +84,7 @@ auth:sanctum  →  tenant  →  (后续: permission / audit)
 - `tenant`（首期实现）：
   - 要求 `X-Tenant-Id` header；缺失返回 403 `X-Tenant-Id header required`
   - `is_platform_admin=true` 用户：直接信任 header，注入 `CurrentTenant`、标记 `is_platform_impersonation=true`、`CurrentMembership=null`
-  - 普通用户：必须存在 `user_org_rel(user_id, tenant_id, status='active')`，否则 403 `no active membership`；通过则注入 `CurrentTenant` + `CurrentMembership`
+  - 普通用户：必须存在 `membership(user_id, tenant_id, status='active')`，否则 403 `no active membership`；通过则注入 `CurrentTenant` + `CurrentMembership`
 - `platform_admin`（首期简化版）：仅校验 `user.is_platform_admin === true`；二迭代补 `:perm` 二参数
 
 `platform_admin` 路由不挂 `tenant` 中间件（平台员工创建租户时，租户尚未存在）。
@@ -129,10 +129,10 @@ auth:sanctum  →  tenant  →  (后续: permission / audit)
 | is_platform_admin | bool | DEFAULT false | 仅 CLI 可置为 true |
 | last_login_at | timestamp | nullable | 最近登录时间（登录成功时更新） |
 
-**不含 `tenant_id`**（INV：用户为全局身份，跨租户绑定通过 `user_org_rels`）。
+**不含 `tenant_id`**（INV：用户为全局身份，跨租户绑定通过 `memberships`）。
 **不含 `email`**（首期登录方式收敛为 phone+password；email 字段未来按需加）。
 
-### 3.4 `user_org_rels`
+### 3.4 `memberships`
 
 base.md §2 / §6.1 的"用户归属关系表"。承担"用户在某租户/门店的成员资格"。
 
@@ -161,7 +161,7 @@ Sanctum 内置 migration（直接 `php artisan vendor:publish`，零改动）。
 | 1 | POST | `/api/auth/login` | （无） | phone + password → 返回 `{ token, user: {id, phone, name, is_platform_admin} }` |
 | 2 | POST | `/api/auth/logout` | `auth:sanctum` | 撤销当前 token |
 | 3 | GET | `/api/me` | `auth:sanctum` | 当前 user 基础信息 |
-| 4 | GET | `/api/me/memberships` | `auth:sanctum` | 列出当前 user 的全部 active `user_org_rels`（前端切租户用）|
+| 4 | GET | `/api/me/memberships` | `auth:sanctum` | 列出当前 user 的全部 active `memberships`（前端切租户用）|
 | 5 | GET | `/api/tenants/current` | `auth:sanctum, tenant` | 当前 tenant 详情（验证 `X-Tenant-Id` 解析成功）|
 | 6 | GET | `/api/stores` | `auth:sanctum, tenant` | 列当前 tenant 下的 stores |
 | 7 | POST | `/api/platform/tenants` | `auth:sanctum, platform_admin` | 创建租户（payload: name）|
@@ -184,7 +184,7 @@ Sanctum 内置 migration（直接 `php artisan vendor:publish`，零改动）。
 
 ### 5.2 `Support/Tenancy/CurrentMembership`
 
-同上结构；持有当前 `UserOrgRel` 模型实例（普通用户）或 `null`（平台员工伪装态）。
+同上结构；持有当前 `Membership` 模型实例（普通用户）或 `null`（平台员工伪装态）。
 
 ### 5.3 `Support/Eloquent/BelongsToTenant` trait
 
@@ -192,11 +192,11 @@ Sanctum 内置 migration（直接 `php artisan vendor:publish`，零改动）。
 1. `bootBelongsToTenant`：`addGlobalScope(new TenantScope)`，所有查询自动追加 `WHERE tenant_id = <CurrentTenant>`；`CurrentTenant` 为 null 时**不追加**（兼容登录前查询）
 2. `creating` 监听：写入时若未显式赋 `tenant_id`，自动注入 `CurrentTenant::require()`
 
-`Tenant` 模型本身**不挂**此 trait（它是租户根）。`User` 也**不挂**（全局身份）。`Store`、`UserOrgRel` 都挂。
+`Tenant` 模型本身**不挂**此 trait（它是租户根）。`User` 也**不挂**（全局身份）。`Store`、`Membership` 都挂。
 
-> **`UserOrgRel` + `withoutGlobalScopes()` 模式**：`UserOrgRel` 挂 trait 是为了业务流（如查"当前租户下的成员"）默认安全，但两类查询必须显式绕过全局作用域：
+> **`Membership` + `withoutGlobalScopes()` 模式**：`Membership` 挂 trait 是为了业务流（如查"当前租户下的成员"）默认安全，但两类查询必须显式绕过全局作用域：
 >
-> 1. `tenant` 中间件解析时：`UserOrgRel::query()->withoutGlobalScopes()->where('user_id', $user->id)->where('tenant_id', $merchantId)->where('status', 'active')->first()` —— 此时 `CurrentTenant` 单例可能持有上一请求的残留值，必须显式去全局作用域
+> 1. `tenant` 中间件解析时：`Membership::query()->withoutGlobalScopes()->where('user_id', $user->id)->where('tenant_id', $merchantId)->where('status', 'active')->first()` —— 此时 `CurrentTenant` 单例可能持有上一请求的残留值，必须显式去全局作用域
 > 2. `/api/me/memberships`：跨租户列出 user 的所有绑定，必须 `withoutGlobalScopes()`
 >
 > 此模式与 supermarket 完全一致，`TenantMiddleware` 直接 1:1 移植即可。
@@ -273,7 +273,7 @@ dashboard、用户/门店/租户的 CRUD UI、平台后台 UI、错误页、加�
 - X-Tenant-Id 是 user 没有 active 绑定的 tenant → 403
 - X-Tenant-Id 是 user 有 active 绑定的 tenant → 200, CurrentTenant 正确
 - is_platform_admin=true 任意 X-Tenant-Id → 200, is_platform_impersonation=true
-- user_org_rel.status=left → 403
+- membership.status=left → 403
 ```
 
 ### 8.3 登录
@@ -290,7 +290,7 @@ dashboard、用户/门店/租户的 CRUD UI、平台后台 UI、错误页、加�
 ```text
 - platform admin 创建 tenant → 200，DB 插入 tenants 行
 - platform admin 创建 store → store.tenant_id 正确
-- platform admin 创建 user + 绑定 → user_org_rels 行存在 status=active
+- platform admin 创建 user + 绑定 → memberships 行存在 status=active
 - 非 platform admin 调 /api/platform/* → 403
 ```
 
@@ -324,14 +324,14 @@ dashboard、用户/门店/租户的 CRUD UI、平台后台 UI、错误页、加�
 | `app/Support/Eloquent/BelongsToMerchant.php` | `app/Support/Eloquent/BelongsToTenant.php` | 全文 `Merchant`→`Tenant`，`merchant_id`→`tenant_id` |
 | `app/Support/Eloquent/MerchantScope.php` | `app/Support/Eloquent/TenantScope.php` | 同上 |
 | `app/Support/Tenancy/CurrentMerchant.php` | `app/Support/Tenancy/CurrentTenant.php` | 同上 |
-| `app/Support/Tenancy/CurrentMembership.php` | 不变 | 字段类型从 `MerchantUser` 改为 `UserOrgRel` |
-| `app/Modules/Auth/Http/Middleware/TenantMiddleware.php` | `app/Modules/Identity/Http/Middleware/TenantMiddleware.php` | 改 namespace；查询 `MerchantUser` → 查询 `UserOrgRel`；header 名 `X-Merchant-Id` → `X-Tenant-Id` |
+| `app/Support/Tenancy/CurrentMembership.php` | 不变 | 字段类型从 `MerchantUser` 改为 `Membership` |
+| `app/Modules/Auth/Http/Middleware/TenantMiddleware.php` | `app/Modules/Identity/Http/Middleware/TenantMiddleware.php` | 改 namespace；查询 `MerchantUser` → 查询 `Membership`；header 名 `X-Merchant-Id` → `X-Tenant-Id` |
 | `app/Modules/Auth/Http/Controllers/AuthController.php` + `LoginAction` + `LoginRequest` + `LoginData` | `app/Modules/Identity/...` 同结构 | 改 namespace；其它逻辑保留 |
-| `app/Modules/Auth/Http/Controllers/MeController.php` | `app/Modules/Identity/Http/Controllers/MeController.php` | 改 namespace；`memberships()` 关系改向 `UserOrgRel` |
+| `app/Modules/Auth/Http/Controllers/MeController.php` | `app/Modules/Identity/Http/Controllers/MeController.php` | 改 namespace；`memberships()` 关系改向 `Membership` |
 
 ### 9.3 全部重写（按 base.md §6.1）
 
-- `app/Modules/Identity/Models/User.php` `UserOrgRel.php`
+- `app/Modules/Identity/Models/User.php` `Membership.php`
 - `app/Modules/Identity/Database/Migrations/*`（5 张表，按 §3 字段定义）
 - `app/Modules/Identity/Database/Factories/*`
 - `app/Modules/Tenancy/Models/Tenant.php` `Store.php`
@@ -353,7 +353,7 @@ dashboard、用户/门店/租户的 CRUD UI、平台后台 UI、错误页、加�
 |---|---|---|
 | 首期不做 RBAC，所有 platform 端点仅靠 `is_platform_admin` 布尔判定 | 二迭代加 RBAC 时，`platform_admin` 中间件需扩展为 `platform_admin:perm` 形态，但路由签名兼容（多参数可选） | 中间件接口预留二参数位 |
 | 首期不做 audit log | 平台敏感操作（创建租户、创建门店、发用户）无审计 | 二迭代 §8.4 时按 supermarket `AuditMiddleware` 模式补 |
-| `user_org_rels` 唯一性走应用层 | 高并发下可能写入两条 active 行 | 首期 platform admin 单线程操作量极小；二迭代加 DB 约束 |
+| `memberships` 唯一性走应用层 | 高并发下可能写入两条 active 行 | 首期 platform admin 单线程操作量极小；二迭代加 DB 约束 |
 | 用户登录账号仅 phone | 海外/无中国手机用户无法登录 | 首期目标用户为国内咖啡店主，phone 足够；后续加 email 时只是 `users` 表加一个 nullable unique 列 |
 | 不做前端错误处理/加载状态 | 体验粗糙 | 首期是 happy path 演示，错误用 alert 即可 |
 
