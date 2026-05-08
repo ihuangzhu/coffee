@@ -8,6 +8,12 @@ use App\Modules\Authorization\Enums\PlatformPermission;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
+/**
+ * platform_roles.permissions 写入校验：
+ *   - 必须是数组
+ *   - 每个元素必须是 PlatformPermission enum 合法值
+ *   - 显式拒绝任何不带 platform. 前缀的 code（INV-B 双向校验）
+ */
 class ValidPlatformPermissionsRule implements ValidationRule
 {
     public function validate(string $attribute, mixed $value, Closure $fail): void

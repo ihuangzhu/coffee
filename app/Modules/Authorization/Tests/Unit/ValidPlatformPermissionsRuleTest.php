@@ -35,3 +35,8 @@ test('拒绝数组里出现非字符串元素', function () {
     $errors = validateWithPlatformRule(['platform.tenants.manage', 123]);
     expect($errors)->not->toBeEmpty();
 });
+
+test('拒绝混合（合法 platform.* + 商户域权限码）', function () {
+    $errors = validateWithPlatformRule(['platform.tenants.manage', 'roles.manage']);
+    expect($errors)->not->toBeEmpty();
+});
