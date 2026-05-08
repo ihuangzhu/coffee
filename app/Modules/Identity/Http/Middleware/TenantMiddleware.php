@@ -69,7 +69,7 @@ class TenantMiddleware
 
         $resolver = app(PermissionResolver::class);
         $bindings = $resolver->resolveBindingsForUserInTenant($user, $tenantId);
-        $effective = $resolver->resolveForUserInTenant($user, $tenantId);
+        $effective = $resolver->permissionsFromBindings($bindings);
 
         $request->attributes->set('current_membership', $membership);
         $request->attributes->set('is_platform_impersonation', false);

@@ -23,8 +23,20 @@ class PermissionResolver
     /** @return string[] 权限码扁平列表（去重） */
     public function resolveForUserInTenant(User $user, string $tenantId): array
     {
-        $bindings = $this->resolveBindingsForUserInTenant($user, $tenantId);
+        return $this->permissionsFromBindings(
+            $this->resolveBindingsForUserInTenant($user, $tenantId)
+        );
+    }
 
+    /**
+     * 从已加载的 binding 集合提取权限并集。
+     * 给中间件等已经持有 bindings 的调用方复用，避免重复 query。
+     *
+     * @param  Collection<int, UserRoleBinding>  $bindings
+     * @return string[] 权限码扁平列表（去重 + 有序）
+     */
+    public function permissionsFromBindings(Collection $bindings): array
+    {
         $perms = [];
         foreach ($bindings as $b) {
             foreach ($b->role?->permissions ?? [] as $code) {

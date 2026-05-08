@@ -73,3 +73,16 @@ test('resolveBindingsForUserInTenant 返回 active 绑定集合（不计 revoked
 
     expect((new PermissionResolver())->resolveBindingsForUserInTenant($u, $t->id))->toHaveCount(2);
 });
+
+test('permissionsFromBindings 直接从 collection 取并集（无 DB query）', function () {
+    $u = User::factory()->create();
+    $t = Tenant::factory()->create();
+    $r = Role::factory()->create(['tenant_id' => $t->id, 'permissions' => ['roles.read']]);
+    UserRoleBinding::factory()->create(['user_id' => $u->id, 'role_id' => $r->id, 'tenant_id' => $t->id]);
+
+    $resolver = new PermissionResolver();
+    $bindings = $resolver->resolveBindingsForUserInTenant($u, $t->id);
+
+    expect($resolver->permissionsFromBindings($bindings))->toBe(['roles.read']);
+    expect($resolver->permissionsFromBindings(collect()))->toBe([]);
+});
