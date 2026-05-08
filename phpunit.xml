@@ -18,7 +18,6 @@
         <!-- 模块内的 Tests 目录，各业务模块测试放在模块自身目录下 -->
         <testsuite name="Modules">
             <directory>app/Modules</directory>
-            <exclude>app/Modules/Merchant/Database</exclude>
         </testsuite>
     </testsuites>
     <source>
