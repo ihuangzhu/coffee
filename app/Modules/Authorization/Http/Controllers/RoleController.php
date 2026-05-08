@@ -27,4 +27,20 @@ class RoleController extends Controller
 
         return response()->json(['roles' => $roles]);
     }
+
+    public function store(\App\Modules\Authorization\Http\Requests\StoreRoleRequest $request): JsonResponse
+    {
+        $tenantId = app(CurrentTenant::class)->require();
+
+        $role = Role::query()->create([
+            'tenant_id' => $tenantId,
+            'name' => $request->input('name'),
+            'code' => $request->input('code'),
+            'scope' => $request->input('scope'),
+            'permissions' => $request->input('permissions'),
+            'is_system' => false,
+        ]);
+
+        return response()->json(['role' => $role], 201);
+    }
 }

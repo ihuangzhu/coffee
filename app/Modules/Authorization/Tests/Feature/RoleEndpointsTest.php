@@ -41,3 +41,39 @@ test('GET /api/roles 缺权限 → 403', function () {
     ['tenant' => $t] = actAsMemberWith([]);
     $this->withHeaders(['X-Tenant-Id' => $t->id])->getJson('/api/roles')->assertStatus(403);
 });
+
+test('POST /api/roles 创建租户专属角色', function () {
+    ['tenant' => $t] = actAsMemberWith(['roles.manage']);
+
+    $resp = $this->withHeaders(['X-Tenant-Id' => $t->id])->postJson('/api/roles', [
+        'name' => '收银员',
+        'code' => 'Cashier',
+        'scope' => 'store',
+        'permissions' => ['stores.read', 'tenant.read'],
+    ]);
+
+    $resp->assertStatus(201);
+    expect($resp->json('role.tenant_id'))->toBe($t->id);
+    expect($resp->json('role.is_system'))->toBeFalse();
+});
+
+test('POST /api/roles 含 platform.* → 422 permission.cross-domain', function () {
+    ['tenant' => $t] = actAsMemberWith(['roles.manage']);
+
+    $resp = $this->withHeaders(['X-Tenant-Id' => $t->id])->postJson('/api/roles', [
+        'name' => '搞事',
+        'code' => 'Bad',
+        'scope' => 'tenant',
+        'permissions' => ['platform.tenants.manage'],
+    ]);
+
+    $resp->assertStatus(422);
+    expect($resp->json('errors.permissions'))->not->toBeEmpty();
+});
+
+test('POST /api/roles 缺 roles.manage → 403', function () {
+    ['tenant' => $t] = actAsMemberWith(['roles.read']);
+    $this->withHeaders(['X-Tenant-Id' => $t->id])->postJson('/api/roles', [
+        'name' => 'X', 'code' => 'X', 'scope' => 'tenant', 'permissions' => [],
+    ])->assertStatus(403);
+});
