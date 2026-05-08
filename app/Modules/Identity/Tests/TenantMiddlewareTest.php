@@ -83,3 +83,49 @@ test('membership.status=left 返回 403', function () {
         ->getJson('/api/__tenant-probe')
         ->assertStatus(403);
 });
+
+test('普通员工通过后注入 effective_permissions 取并集', function () {
+    $u = \App\Modules\Identity\Models\User::factory()->create();
+    $t = \App\Modules\Tenancy\Models\Tenant::factory()->create();
+    \App\Modules\Identity\Models\Membership::factory()->create([
+        'user_id' => $u->id, 'tenant_id' => $t->id, 'status' => 'active',
+    ]);
+    $r1 = \App\Modules\Authorization\Models\Role::factory()->create([
+        'tenant_id' => $t->id, 'permissions' => ['roles.read', 'users.read'],
+    ]);
+    $r2 = \App\Modules\Authorization\Models\Role::factory()->create([
+        'tenant_id' => $t->id, 'permissions' => ['users.read', 'stores.read'],
+    ]);
+    \App\Modules\Authorization\Models\UserRoleBinding::factory()->create([
+        'user_id' => $u->id, 'role_id' => $r1->id, 'tenant_id' => $t->id,
+    ]);
+    \App\Modules\Authorization\Models\UserRoleBinding::factory()->create([
+        'user_id' => $u->id, 'role_id' => $r2->id, 'tenant_id' => $t->id,
+    ]);
+
+    \Laravel\Sanctum\Sanctum::actingAs($u);
+    $resp = $this->withHeaders(['X-Tenant-Id' => $t->id])->getJson('/api/__tenant-probe');
+
+    $resp->assertOk();
+    expect($resp->json('effective_permissions'))->toEqualCanonicalizing(['roles.read', 'users.read', 'stores.read']);
+    expect($resp->json('role_bindings_count'))->toBe(2);
+    expect($resp->json('is_platform_impersonation'))->toBeFalse();
+});
+
+test('platform admin impersonation 注入 platform_role', function () {
+    $admin = \App\Modules\Identity\Models\User::factory()->platformAdmin()->create();
+    $pr = \App\Modules\Authorization\Models\PlatformRole::factory()->create([
+        'code' => 'TestSuperAdmin',
+        'permissions' => ['platform.impersonate.full'],
+    ]);
+    $admin->update(['platform_role_id' => $pr->id]);
+    $t = \App\Modules\Tenancy\Models\Tenant::factory()->create();
+
+    \Laravel\Sanctum\Sanctum::actingAs($admin);
+    $resp = $this->withHeaders(['X-Tenant-Id' => $t->id])->getJson('/api/__tenant-probe');
+
+    $resp->assertOk();
+    expect($resp->json('is_platform_impersonation'))->toBeTrue();
+    expect($resp->json('platform_role_code'))->toBe('TestSuperAdmin');
+    expect($resp->json('effective_permissions'))->toBeNull();
+});

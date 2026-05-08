@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Identity\Http\Middleware;
 
+use App\Modules\Authorization\Services\PermissionResolver;
 use App\Modules\Identity\Models\Membership;
 use App\Support\Tenancy\CurrentMembership;
 use App\Support\Tenancy\CurrentTenant;
@@ -11,16 +12,18 @@ use Closure;
 use Illuminate\Http\Request;
 
 /**
- * 租户解析中间件。
+ * 租户解析中间件（spec §5.1）。
  *
  * 职责：
  *   1. 强制 X-Tenant-Id header 存在（否则 403）
- *   2. 平台员工（is_platform_admin=true）→ 直接信任 header，注入 CurrentTenant
- *      并标记 is_platform_impersonation=true（具体能否做事由后续 PermissionMiddleware 判定）
- *   3. 普通员工 → 必须在该 tenant 拥有 status=active 的 membership；否则 403
+ *   2. 平台员工（is_platform_admin=true）→ 直接信任 header；platform_role 注入；
+ *      attributes：is_platform_impersonation=true / platform_role / 其余为 null
+ *   3. 普通员工 → 必须有 status=active membership；解析 effective_permissions
+ *      attributes：is_platform_impersonation=false / current_role_bindings / effective_permissions
  *   4. 通过后，CurrentTenant / CurrentMembership / request attributes 全部就绪
  *
- * 必须挂在 auth:sanctum 之后；后续 permission middleware 必须挂在本中间件之后。
+ * INV-C：is_platform_impersonation=true 时不消费 role_bindings
+ * INV-D：is_platform_impersonation=false 时不消费 platform_role
  */
 class TenantMiddleware
 {
@@ -33,7 +36,6 @@ class TenantMiddleware
 
         $user = $request->user();
         if (! $user) {
-            // 理论上 auth:sanctum 已挡住，兜底防御
             return response()->json(['error' => 'unauthenticated'], 401);
         }
 
@@ -42,6 +44,9 @@ class TenantMiddleware
             app(CurrentMembership::class)->set(null);
             $request->attributes->set('current_membership', null);
             $request->attributes->set('is_platform_impersonation', true);
+            $request->attributes->set('platform_role', $user->platformRole);
+            $request->attributes->set('current_role_bindings', null);
+            $request->attributes->set('effective_permissions', null);
 
             return $next($request);
         }
@@ -61,8 +66,16 @@ class TenantMiddleware
 
         app(CurrentTenant::class)->set($tenantId);
         app(CurrentMembership::class)->set($membership);
+
+        $resolver = app(PermissionResolver::class);
+        $bindings = $resolver->resolveBindingsForUserInTenant($user, $tenantId);
+        $effective = $resolver->resolveForUserInTenant($user, $tenantId);
+
         $request->attributes->set('current_membership', $membership);
         $request->attributes->set('is_platform_impersonation', false);
+        $request->attributes->set('platform_role', null);
+        $request->attributes->set('current_role_bindings', $bindings);
+        $request->attributes->set('effective_permissions', $effective);
 
         return $next($request);
     }

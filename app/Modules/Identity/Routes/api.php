@@ -16,10 +16,13 @@ use Illuminate\Support\Facades\Route;
 // 仅在 testing 环境注册：避免生产/线上暴露内部探针端点
 if (app()->environment('testing')) {
     Route::prefix('api')->middleware(['auth:sanctum', 'tenant'])->group(function () {
-        Route::get('__tenant-probe', function () {
+        Route::get('__tenant-probe', function (\Illuminate\Http\Request $request) {
             return response()->json([
-                'tenant_id' => app(CurrentTenant::class)->id(),
-                'is_platform_impersonation' => request()->attributes->get('is_platform_impersonation'),
+                'tenant_id' => app(\App\Support\Tenancy\CurrentTenant::class)->id(),
+                'is_platform_impersonation' => $request->attributes->get('is_platform_impersonation'),
+                'platform_role_code' => $request->attributes->get('platform_role')?->code,
+                'effective_permissions' => $request->attributes->get('effective_permissions'),
+                'role_bindings_count' => $request->attributes->get('current_role_bindings')?->count(),
             ]);
         });
     });
