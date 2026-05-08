@@ -26,6 +26,9 @@ test('未登录调 platform endpoint 返回 401', function () {
 
 test('platform admin 创建租户', function () {
     $admin = User::factory()->platformAdmin()->create();
+    $superRole = \App\Modules\Authorization\Models\PlatformRole::query()
+        ->where('code', 'PlatformSuperAdmin')->firstOrFail();
+    $admin->update(['platform_role_id' => $superRole->id]);
     Sanctum::actingAs($admin);
 
     $resp = $this->postJson('/api/platform/tenants', ['name' => '九号咖啡'])
@@ -37,6 +40,9 @@ test('platform admin 创建租户', function () {
 
 test('platform admin 创建 store', function () {
     $admin = User::factory()->platformAdmin()->create();
+    $superRole = \App\Modules\Authorization\Models\PlatformRole::query()
+        ->where('code', 'PlatformSuperAdmin')->firstOrFail();
+    $admin->update(['platform_role_id' => $superRole->id]);
     $t = Tenant::factory()->create();
     Sanctum::actingAs($admin);
 
@@ -49,6 +55,9 @@ test('platform admin 创建 store', function () {
 
 test('platform admin 创建 user 并绑定 tenant 级 membership', function () {
     $admin = User::factory()->platformAdmin()->create();
+    $superRole = \App\Modules\Authorization\Models\PlatformRole::query()
+        ->where('code', 'PlatformSuperAdmin')->firstOrFail();
+    $admin->update(['platform_role_id' => $superRole->id]);
     $t = Tenant::factory()->create();
     Sanctum::actingAs($admin);
 
@@ -69,6 +78,9 @@ test('platform admin 创建 user 并绑定 tenant 级 membership', function () {
 
 test('platform admin 创建 user 并绑定 store 级 membership', function () {
     $admin = User::factory()->platformAdmin()->create();
+    $superRole = \App\Modules\Authorization\Models\PlatformRole::query()
+        ->where('code', 'PlatformSuperAdmin')->firstOrFail();
+    $admin->update(['platform_role_id' => $superRole->id]);
     $t = Tenant::factory()->create();
     $s = Store::factory()->create(['tenant_id' => $t->id]);
     Sanctum::actingAs($admin);
@@ -89,6 +101,9 @@ test('platform admin 创建 user 并绑定 store 级 membership', function () {
 
 test('phone 重复创建 user 返回 422', function () {
     $admin = User::factory()->platformAdmin()->create();
+    $superRole = \App\Modules\Authorization\Models\PlatformRole::query()
+        ->where('code', 'PlatformSuperAdmin')->firstOrFail();
+    $admin->update(['platform_role_id' => $superRole->id]);
     $t = Tenant::factory()->create();
     User::factory()->create(['phone' => '13899998888']);
     Sanctum::actingAs($admin);
