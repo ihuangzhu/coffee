@@ -29,5 +29,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\App\Support\Exceptions\BusinessException $e, $request) {
+            if (! $request->expectsJson() && ! $request->is('api/*')) {
+                return null;
+            }
+            return response()->json([
+                'code' => $e->errorCode(),
+                'message' => $e->getMessage(),
+                'details' => $e->details(),
+            ], $e->httpStatus());
+        });
     })->create();

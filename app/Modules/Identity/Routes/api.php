@@ -25,6 +25,14 @@ if (app()->environment('testing')) {
                 'role_bindings_count' => $request->attributes->get('current_role_bindings')?->count(),
             ]);
         });
+
+        Route::get('__perm-probe', function () {
+            return response()->json(['ok' => true]);
+        })->middleware('permission:roles.manage');
+
+        Route::post('__perm-probe-write', function () {
+            return response()->json(['ok' => true]);
+        })->middleware('permission:roles.manage');
     });
 }
 
