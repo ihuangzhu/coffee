@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Identity\Http\Controllers\AuthController;
 use App\Support\Tenancy\CurrentTenant;
 use Illuminate\Support\Facades\Route;
 
@@ -18,4 +19,15 @@ Route::prefix('api')->middleware(['auth:sanctum', 'tenant'])->group(function () 
             'is_platform_impersonation' => request()->attributes->get('is_platform_impersonation'),
         ]);
     });
+});
+
+// 公开端点：登录（throttle 限流防爆破）
+Route::prefix('api/auth')->group(function () {
+    Route::post('login', [AuthController::class, 'login'])
+        ->middleware('throttle:5,1');
+});
+
+// 已登录但不要求 tenant：登出
+Route::prefix('api/auth')->middleware('auth:sanctum')->group(function () {
+    Route::post('logout', [AuthController::class, 'logout']);
 });
