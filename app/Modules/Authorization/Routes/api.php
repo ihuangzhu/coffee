@@ -12,4 +12,5 @@ Route::prefix('api')->middleware(['auth:sanctum', 'tenant'])->group(function () 
     Route::get('roles', [RoleController::class, 'index'])->middleware('permission:roles.read');
     Route::post('roles', [RoleController::class, 'store'])->middleware('permission:roles.manage');
     Route::patch('roles/{roleId}', [RoleController::class, 'update'])->middleware('permission:roles.manage');
+    Route::delete('roles/{roleId}', [RoleController::class, 'destroy'])->middleware('permission:roles.manage');
 });

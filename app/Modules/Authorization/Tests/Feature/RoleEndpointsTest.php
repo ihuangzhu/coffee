@@ -110,3 +110,42 @@ test('PATCH /api/roles/{id} 改别租户角色 → 404', function () {
         ->patchJson("/api/roles/{$r->id}", ['name' => '篡改']);
     $resp->assertStatus(404);
 });
+
+test('DELETE /api/roles/{id} 删未被引用的自建角色', function () {
+    ['tenant' => $t] = actAsMemberWith(['roles.manage']);
+    $r = Role::factory()->create(['tenant_id' => $t->id]);
+
+    $this->withHeaders(['X-Tenant-Id' => $t->id])
+        ->deleteJson("/api/roles/{$r->id}")->assertStatus(204);
+
+    expect(Role::find($r->id))->toBeNull();
+});
+
+test('DELETE /api/roles/{id} 被 active binding 引用 → 409 role.in-use', function () {
+    ['user' => $actor, 'tenant' => $t] = actAsMemberWith(['roles.manage']);
+    $r = Role::factory()->create(['tenant_id' => $t->id]);
+    $other = User::factory()->create();
+    Membership::factory()->create(['user_id' => $other->id, 'tenant_id' => $t->id]);
+    UserRoleBinding::factory()->create(['user_id' => $other->id, 'role_id' => $r->id, 'tenant_id' => $t->id]);
+
+    $resp = $this->withHeaders(['X-Tenant-Id' => $t->id])->deleteJson("/api/roles/{$r->id}");
+    $resp->assertStatus(409);
+    expect($resp->json('code'))->toBe('role.in-use');
+    expect($resp->json('details.binding_count'))->toBe(1);
+});
+
+test('DELETE /api/roles/{id} 被 revoked binding 引用不挡删', function () {
+    ['tenant' => $t] = actAsMemberWith(['roles.manage']);
+    $r = Role::factory()->create(['tenant_id' => $t->id]);
+    $other = User::factory()->create();
+    UserRoleBinding::factory()->revoked()->create(['user_id' => $other->id, 'role_id' => $r->id, 'tenant_id' => $t->id]);
+
+    $this->withHeaders(['X-Tenant-Id' => $t->id])->deleteJson("/api/roles/{$r->id}")->assertStatus(204);
+});
+
+test('DELETE /api/roles/{id} is_system=true → 403 role.system-locked', function () {
+    ['tenant' => $t] = actAsMemberWith(['roles.manage']);
+    $r = Role::query()->where('code', 'StoreClerk')->whereNull('tenant_id')->firstOrFail();
+    $resp = $this->withHeaders(['X-Tenant-Id' => $t->id])->deleteJson("/api/roles/{$r->id}");
+    $resp->assertStatus(403);
+});

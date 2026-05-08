@@ -73,4 +73,50 @@ class RoleController extends Controller
 
         return response()->json(['role' => $role]);
     }
+
+    public function destroy(string $roleId): JsonResponse
+    {
+        $tenantId = app(CurrentTenant::class)->require();
+
+        $role = Role::query()->where('id', $roleId)->first();
+        if (! $role) {
+            abort(404);
+        }
+
+        if ($role->is_system) {
+            throw new \App\Support\Exceptions\BusinessException(
+                'role.system-locked', '系统内置角色不可删除', 403,
+            );
+        }
+
+        // 别租户角色 → 隐藏存在性，返回 404
+        if ($role->tenant_id !== $tenantId) {
+            abort(404);
+        }
+
+        $bindingCount = \App\Modules\Authorization\Models\UserRoleBinding::query()
+            ->withoutGlobalScopes()
+            ->where('role_id', $roleId)
+            ->where('status', 'active')
+            ->count();
+
+        if ($bindingCount > 0) {
+            throw new \App\Support\Exceptions\BusinessException(
+                'role.in-use',
+                '角色被在用绑定引用，无法删除',
+                409,
+                ['binding_count' => $bindingCount],
+            );
+        }
+
+        // 删除 revoked 绑定留痕（FK restrictOnDelete，revoked 不算占用但需先清理）
+        \App\Modules\Authorization\Models\UserRoleBinding::query()
+            ->withoutGlobalScopes()
+            ->where('role_id', $roleId)
+            ->where('status', 'revoked')
+            ->delete();
+
+        $role->delete();
+        return response()->json(null, 204);
+    }
 }
