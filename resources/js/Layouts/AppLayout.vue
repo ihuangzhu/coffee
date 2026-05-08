@@ -3,7 +3,7 @@
     <header class="bg-amber-700 text-white px-6 py-3 flex items-center justify-between">
       <div class="font-semibold">{{ appName ?? 'Coffee' }}</div>
       <div class="text-sm flex items-center gap-4">
-        <span v-if="auth.tenantId">当前租户：{{ auth.tenantId }}</span>
+        <span v-if="auth.tenantId">当前租户：{{ auth.tenantName ?? auth.tenantId }}</span>
         <el-button size="small" @click="switchTenant">切换租户</el-button>
         <el-button size="small" @click="logout">登出</el-button>
       </div>

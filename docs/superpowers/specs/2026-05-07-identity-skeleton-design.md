@@ -280,8 +280,8 @@ dashboard、用户/门店/租户的 CRUD UI、平台后台 UI、错误页、加�
 
 ```text
 - 正确 phone+password → 200 + token
-- 错误 password → 401
-- phone 不存在 → 401（避免账号枚举）
+- 错误 password → 422（ValidationException，phone 字段统一报"账号或密码错误"）
+- phone 不存在 → 422（同上，避免账号枚举）
 - 限流：6 次错误连续请求 → 第 6 次 429
 ```
 

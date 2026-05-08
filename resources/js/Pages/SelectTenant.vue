@@ -7,7 +7,7 @@
     </div>
     <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <el-card v-for="m in memberships" :key="m.tenant_id" shadow="hover"
-               class="cursor-pointer hover:border-amber-600" @click="enter(m.tenant_id)">
+               class="cursor-pointer hover:border-amber-600" @click="enter(m.tenant_id, m.tenant_name)">
         <div class="text-lg font-medium text-stone-800">{{ m.tenant_name }}</div>
         <div class="text-xs text-stone-500 mt-1">
           {{ m.store_id ? '门店级成员' : '租户级成员' }}
@@ -40,8 +40,8 @@ onMounted(async () => {
   }
 });
 
-function enter(id: string) {
-  auth.setTenant(id);
+function enter(id: string, name: string) {
+  auth.setTenant(id, name);
   router.visit('/');
 }
 </script>
