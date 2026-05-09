@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Modules\Authorization\Http\Controllers\Web\TenantRoleController;
 use App\Modules\Catalog\Http\Controllers\Web\TenantCategoryController;
-use App\Modules\Catalog\Http\Controllers\Web\TenantGoodController;
 use App\Modules\Identity\Http\Controllers\Web\AuthController;
 use App\Modules\Identity\Http\Controllers\Web\StoreUserController;
 use App\Modules\Identity\Http\Controllers\Web\TenantProfileController;
@@ -124,12 +123,6 @@ Route::prefix('tenant')->middleware('auth')->group(function () use ($paginated, 
     Route::get('categories/{id}/edit', [TenantCategoryController::class, 'edit']);
     Route::patch('categories/{id}', [TenantCategoryController::class, 'update']);
     Route::delete('categories/{id}', [TenantCategoryController::class, 'destroy']);
-
-    Route::get('goods', [TenantGoodController::class, 'index']);
-    Route::get('goods/create', [TenantGoodController::class, 'create']);
-    Route::post('goods', [TenantGoodController::class, 'storeFromForm']);
-    Route::get('goods/{id}/edit', [TenantGoodController::class, 'edit']);
-    Route::patch('goods/{id}', [TenantGoodController::class, 'update']);
 
     Route::get('stores', [TenantStoreController::class, 'index']);
     Route::get('stores/{storeId}/users', [StoreUserController::class, 'index']);

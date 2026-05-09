@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Modules\Catalog\Http\Controllers\Web;
 
 use App\Modules\Catalog\Models\Category;
-use App\Modules\Catalog\Models\Good;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -35,19 +34,10 @@ class TenantCategoryController extends Controller
         $categories = $query->skip(($page - 1) * $pageSize)->take($pageSize)
             ->get(['id', 'name', 'sort']);
 
-        // 批量统计每分类下商品数
-        $counts = Good::query()->withoutGlobalScopes()
-            ->where('tenant_id', $tenantId)
-            ->whereIn('category_id', $categories->pluck('id'))
-            ->groupBy('category_id')
-            ->selectRaw('category_id, COUNT(*) AS c')
-            ->pluck('c', 'category_id');
-
         $rows = $categories->map(fn (Category $c) => [
             'id' => $c->id,
             'name' => $c->name,
             'sort' => (int) $c->sort,
-            'goods_count' => (int) ($counts[$c->id] ?? 0),
         ])->all();
 
         return Inertia::render('tenant/Categories/Index', [
@@ -124,13 +114,6 @@ class TenantCategoryController extends Controller
     {
         $tenantId = $this->requireCurrentTenant($request);
         $cat = $this->resolve($tenantId, $id);
-
-        $inUse = Good::query()->withoutGlobalScopes()
-            ->where('tenant_id', $tenantId)
-            ->where('category_id', $cat->id)->exists();
-        if ($inUse) {
-            throw ValidationException::withMessages(['category' => '该分类下仍有商品，无法删除']);
-        }
 
         $cat->delete();
         return back()->with('success', '已删除');

@@ -16,7 +16,6 @@ interface CategoryRow extends Record<string, unknown> {
   id: string;
   name: string;
   sort: number;
-  goods_count: number;
 }
 
 const page = usePage();
@@ -55,7 +54,6 @@ async function destroy(row: CategoryRow) {
 const columns = [
   { key: 'name', label: '分类名称' },
   { key: 'sort', label: '排序', width: 100 },
-  { key: 'goods_count', label: '商品数', width: 120 },
 ];
 </script>
 
