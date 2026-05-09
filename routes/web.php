@@ -11,6 +11,7 @@ use App\Modules\Identity\Http\Controllers\Web\TenantProfileController;
 use App\Modules\Identity\Http\Controllers\Web\TenantUserController;
 use App\Modules\Tenancy\Http\Controllers\Platform\PlatformStoreController;
 use App\Modules\Tenancy\Http\Controllers\Platform\PlatformTenantController;
+use App\Modules\Inventory\Http\Controllers\Web\TenantStockController;
 use App\Modules\Tenancy\Http\Controllers\Web\TenantStoreController;
 use App\Support\Tenancy\WebTenantAccess;
 use Illuminate\Support\Facades\Auth;
@@ -130,6 +131,9 @@ Route::prefix('tenant')->middleware('auth')->group(function () use ($paginated, 
     Route::post('items', [TenantItemController::class, 'storeFromForm']);
     Route::get('items/{id}/edit', [TenantItemController::class, 'edit']);
     Route::patch('items/{id}', [TenantItemController::class, 'update']);
+
+    Route::get('stock', [TenantStockController::class, 'index']);
+    Route::get('stock/txns', [TenantStockController::class, 'txns']);
 
     Route::get('stores', [TenantStoreController::class, 'index']);
     Route::get('stores/{storeId}/users', [StoreUserController::class, 'index']);
