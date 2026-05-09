@@ -108,8 +108,8 @@ class TenantStockMutationController extends Controller
 
     public function reverse(Request $request, int $id): RedirectResponse
     {
-        $this->requireCurrentTenant($request);
-        ReverseStockTxnAction::handle($id, (string) $request->user()->id);
+        $tenantId = $this->requireCurrentTenant($request);
+        ReverseStockTxnAction::handle($id, $tenantId, (string) $request->user()->id);
         return back()->with('success', '已撤销');
     }
 

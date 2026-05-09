@@ -153,6 +153,34 @@ test('跨租户隔离：他租户分类不可访问', function () {
     $this->get("/tenant/categories/{$otherCat->id}/edit")->assertNotFound();
 });
 
+test('PATCH 重父：descendants path/level 同步更新', function () {
+    $rootA = Category::factory()->create(['tenant_id' => $this->tenant->id, 'name' => 'A']);
+    $childA1 = Category::factory()->child($rootA)->create(['tenant_id' => $this->tenant->id, 'name' => 'A.1']);
+    $grandchildA11 = Category::factory()->child($childA1)->create(['tenant_id' => $this->tenant->id, 'name' => 'A.1.1']);
+    $rootB = Category::factory()->create(['tenant_id' => $this->tenant->id, 'name' => 'B']);
+
+    $this->patch("/tenant/categories/{$rootA->id}", [
+        'owner_type' => 'TENANT',
+        'category_type' => 'BUSINESS',
+        'item_type_scope' => 'ALL',
+        'parent_id' => $rootB->id,
+        'name' => 'A',
+    ])->assertRedirect();
+
+    $rootA->refresh();
+    $childA1->refresh();
+    $grandchildA11->refresh();
+
+    expect($rootA->path)->toBe('/' . $rootB->id . '/');
+    expect($rootA->level)->toBe(2);
+
+    expect($childA1->path)->toBe('/' . $rootB->id . '/' . $rootA->id . '/');
+    expect($childA1->level)->toBe(3);
+
+    expect($grandchildA11->path)->toBe('/' . $rootB->id . '/' . $rootA->id . '/' . $childA1->id . '/');
+    expect($grandchildA11->level)->toBe(4);
+});
+
 test('父子 owner 不一致 → 422', function () {
     $parent = Category::factory()->create([
         'tenant_id' => $this->tenant->id,

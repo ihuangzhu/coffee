@@ -139,6 +139,9 @@ class TenantCategoryController extends Controller
 
         $pathAndLevel = $cat->computePathAndLevel($newParent);
 
+        $oldPath = $cat->path;
+        $oldLevel = $cat->level;
+
         $cat->update([
             'owner_type' => $data['owner_type'],
             'owner_store_id' => $data['owner_store_id'] ?? null,
@@ -152,6 +155,20 @@ class TenantCategoryController extends Controller
             'level' => $pathAndLevel['level'],
             'path' => $pathAndLevel['path'],
         ]);
+
+        $oldPrefix = $oldPath . $cat->id . '/';
+        $newPrefix = $pathAndLevel['path'] . $cat->id . '/';
+        $levelDelta = $pathAndLevel['level'] - $oldLevel;
+
+        if ($oldPrefix !== $newPrefix || $levelDelta !== 0) {
+            DB::table('categories')
+                ->where('tenant_id', $tenantId)
+                ->where('path', 'LIKE', $oldPrefix . '%')
+                ->update([
+                    'path' => DB::raw("REPLACE(path, '" . $oldPrefix . "', '" . $newPrefix . "')"),
+                    'level' => DB::raw('level + ' . $levelDelta),
+                ]);
+        }
 
         return back()->with('success', '已更新');
     }

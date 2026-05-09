@@ -37,7 +37,7 @@ test('撤销 ADJUSTMENT IN 笔：库存回到撤销前', function () {
         $this->sku->id, '50', 'IN', 'INITIAL', $this->user->id,
     );
 
-    $reverseId = ReverseStockTxnAction::handle($orig, $this->user->id);
+    $reverseId = ReverseStockTxnAction::handle($orig, $this->tenant->id, $this->user->id);
 
     $reverseTxn = StockTxn::query()->find($reverseId);
     expect($reverseTxn->biz_type->value)->toBe('ADJUSTMENT');
@@ -60,7 +60,7 @@ test('撤销 DAMAGE_OUT：库存恢复', function () {
         $this->sku->id, '5', 800, $this->user->id, '过期',
     );
 
-    ReverseStockTxnAction::handle($damageTxn, $this->user->id);
+    ReverseStockTxnAction::handle($damageTxn, $this->tenant->id, $this->user->id);
 
     $balance = StockBalance::query()->withoutGlobalScopes()
         ->where('sku_id', $this->sku->id)->first();
@@ -73,13 +73,32 @@ test('已撤销的不能再撤', function () {
         $this->sku->id, '10', 'IN', 'INITIAL', $this->user->id,
     );
 
-    ReverseStockTxnAction::handle($orig, $this->user->id);
+    ReverseStockTxnAction::handle($orig, $this->tenant->id, $this->user->id);
 
-    expect(fn () => ReverseStockTxnAction::handle($orig, $this->user->id))
+    expect(fn () => ReverseStockTxnAction::handle($orig, $this->tenant->id, $this->user->id))
         ->toThrow(BusinessException::class);
 });
 
 test('不存在的 txn_id 抛异常', function () {
-    expect(fn () => ReverseStockTxnAction::handle(99999, $this->user->id))
+    expect(fn () => ReverseStockTxnAction::handle(99999, $this->tenant->id, $this->user->id))
+        ->toThrow(BusinessException::class);
+});
+
+test('跨租户撤销 → 404 BusinessException', function () {
+    $otherTenant = Tenant::factory()->create();
+    $otherStore = Store::factory()->create(['tenant_id' => $otherTenant->id]);
+    $otherOwner = StockOwner::query()->withoutGlobalScopes()
+        ->where('owner_ref_id', $otherStore->id)->first();
+    $otherLocation = StockLocation::query()->withoutGlobalScopes()
+        ->where('stock_owner_id', $otherOwner->id)->first();
+    $otherItem = Item::factory()->create(['tenant_id' => $otherTenant->id]);
+    $otherSku = ItemSku::factory()->create(['tenant_id' => $otherTenant->id, 'item_id' => $otherItem->id]);
+
+    $otherTxnId = AdjustStockAction::handle(
+        $otherTenant->id, $otherStore->id, $otherOwner->id, $otherLocation->id,
+        $otherSku->id, '30', 'IN', 'INITIAL', $this->user->id,
+    );
+
+    expect(fn () => ReverseStockTxnAction::handle($otherTxnId, $this->tenant->id, $this->user->id))
         ->toThrow(BusinessException::class);
 });

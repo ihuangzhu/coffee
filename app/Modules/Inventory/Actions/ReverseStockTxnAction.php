@@ -23,11 +23,11 @@ use Illuminate\Support\Facades\DB;
  */
 class ReverseStockTxnAction
 {
-    public static function handle(int $txnId, string $operatorId): int
+    public static function handle(int $txnId, string $tenantId, string $operatorId): int
     {
-        return DB::transaction(function () use ($txnId, $operatorId) {
+        return DB::transaction(function () use ($txnId, $tenantId, $operatorId) {
             $orig = StockTxn::query()->withoutGlobalScopes()->find($txnId);
-            if (! $orig) {
+            if (! $orig || $orig->tenant_id !== $tenantId) {
                 throw new BusinessException('TXN_NOT_FOUND', "流水 {$txnId} 不存在", 404);
             }
 

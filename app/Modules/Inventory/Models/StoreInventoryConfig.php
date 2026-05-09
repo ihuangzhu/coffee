@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Modules\Inventory\Models;
 
 use App\Modules\Inventory\Database\Factories\StoreInventoryConfigFactory;
+use App\Support\Eloquent\BelongsToTenant;
 use App\Support\Eloquent\HasUlid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class StoreInventoryConfig extends Model
 {
+    use BelongsToTenant;
     use HasFactory;
     use HasUlid;
 
