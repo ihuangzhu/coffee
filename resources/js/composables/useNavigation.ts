@@ -53,7 +53,7 @@ export const tenantModules: ModuleNav[] = [
     sidebar: [
       { key: 'categories', icon: 'Folder', label: 'nav.categories', url: '/tenant/categories', permission: 'categories.read' },
       { key: 'items', icon: 'Goods', label: 'nav.items', url: '/tenant/items', permission: 'items.read' },
-      { key: 'boms', icon: 'Connection', label: 'nav.bom', url: '/tenant/boms', permission: 'bom.read' },
+      { key: 'boms', icon: 'Connection', label: 'nav.bom', url: '/tenant/boms', permission: 'boms.read' },
     ],
   },
   {
@@ -66,6 +66,7 @@ export const tenantModules: ModuleNav[] = [
       { key: 'stock-adjust', icon: 'Tools', label: 'nav.stock_adjust', url: '/tenant/stock/adjust', permission: 'inventory.adjust' },
       { key: 'stock-stocktake', icon: 'Histogram', label: 'nav.stocktake', url: '/tenant/stock/stocktake', permission: 'stocktake.write' },
       { key: 'stock-damage', icon: 'Tickets', label: 'nav.damage', url: '/tenant/stock/damage', permission: 'damage.write' },
+      { key: 'produce', icon: 'Operation', label: 'nav.produce', url: '/tenant/produce', permission: 'production.execute' },
       { key: 'inventory-config', icon: 'Setting', label: 'nav.inventory_config', url: '/tenant/settings/inventory', permission: 'inventory_config.read' },
     ],
   },

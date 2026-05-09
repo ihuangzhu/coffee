@@ -15,6 +15,7 @@ export default {
   stock_adjust: '调整',
   stocktake: '盘点',
   damage: '报损',
+  produce: '生产入库',
   inventory_config: '配置',
   settings: '设置',
   profile: '个人资料',
