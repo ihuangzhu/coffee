@@ -44,10 +44,10 @@ class CategoryFactory extends Factory
     {
         return $this->state([
             'tenant_id' => $parent->tenant_id,
-            'owner_type' => $parent->owner_type,
+            'owner_type' => $parent->getRawOriginal('owner_type'),
             'owner_store_id' => $parent->owner_store_id,
-            'category_type' => $parent->category_type,
-            'item_type_scope' => $parent->item_type_scope,
+            'category_type' => $parent->getRawOriginal('category_type'),
+            'item_type_scope' => $parent->getRawOriginal('item_type_scope'),
             'parent_id' => $parent->id,
             'level' => $parent->level + 1,
             'path' => $parent->path.$parent->id.'/',

@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('code', 64)->nullable();
             $table->unsignedSmallInteger('level')->default(1);
             $table->string('path', 500)->default('/');
-            $table->integer('sort_no')->default(0);
+            $table->unsignedInteger('sort_no')->default(0);
             $table->enum('status', ['active', 'disabled'])->default('active');
             $table->timestamps();
             $table->softDeletes();
