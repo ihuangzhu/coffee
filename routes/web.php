@@ -12,6 +12,7 @@ use App\Modules\Identity\Http\Controllers\Web\TenantUserController;
 use App\Modules\Tenancy\Http\Controllers\Platform\PlatformStoreController;
 use App\Modules\Tenancy\Http\Controllers\Platform\PlatformTenantController;
 use App\Modules\Inventory\Http\Controllers\Web\TenantInventoryConfigController;
+use App\Modules\Inventory\Http\Controllers\Web\TenantStoreInventoryConfigController;
 use App\Modules\Inventory\Http\Controllers\Web\TenantStockController;
 use App\Modules\Inventory\Http\Controllers\Web\TenantStockMutationController;
 use App\Modules\Tenancy\Http\Controllers\Web\TenantStoreController;
@@ -148,6 +149,8 @@ Route::prefix('tenant')->middleware('auth')->group(function () use ($paginated, 
     Route::post('stock/txns/{id}/reverse', [TenantStockMutationController::class, 'reverse']);
 
     Route::get('stores', [TenantStoreController::class, 'index']);
+    Route::get('stores/{storeId}/inventory', [TenantStoreInventoryConfigController::class, 'show']);
+    Route::patch('stores/{storeId}/inventory', [TenantStoreInventoryConfigController::class, 'update']);
     Route::get('stores/{storeId}/users', [StoreUserController::class, 'index']);
     Route::get('stores/{storeId}/users/create', [StoreUserController::class, 'create']);
     Route::post('stores/{storeId}/users', [StoreUserController::class, 'storeFromForm']);
