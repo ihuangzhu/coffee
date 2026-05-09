@@ -234,6 +234,25 @@ test('DELETE /tenant/boms/{id} 软删后从列表消失', function () {
     $resp->assertInertia(fn ($p) => $p->where('boms.total', 0));
 });
 
+test('GET /tenant/boms 即使 CurrentTenant 未设置仍按 session tenant 隔离', function () {
+    $t1 = Tenant::factory()->create();
+    $t2 = Tenant::factory()->create();
+    actingAsTenantUser($t1);  // sets session current_tenant_id = t1
+    $sku1 = makeSku($t1->id, 'SALE_PRODUCT');
+    Bom::factory()->create(['tenant_id' => $t1->id, 'output_sku_id' => $sku1->id]);
+
+    app(\App\Support\Tenancy\CurrentTenant::class)->set(null);  // 故意清空 CurrentTenant
+
+    $sku2 = makeSku($t2->id, 'SALE_PRODUCT');
+    Bom::factory()->create(['tenant_id' => $t2->id, 'output_sku_id' => $sku2->id]);
+
+    app(\App\Support\Tenancy\CurrentTenant::class)->set(null);  // 再次清空
+    $resp = test()->get('/tenant/boms');
+    $resp->assertOk();
+    // 即使 CurrentTenant=null，控制器仍应按 session 中的 t1 过滤
+    $resp->assertInertia(fn ($p) => $p->where('boms.total', 1));
+});
+
 test('编辑跨租户 BOM → 404', function () {
     $tenant = Tenant::factory()->create();
     $other = Tenant::factory()->create();
