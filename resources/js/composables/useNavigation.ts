@@ -47,6 +47,21 @@ export const tenantModules: ModuleNav[] = [
     ],
   },
   {
+    key: 'inventory',
+    label: 'nav.inventory',
+    defaultUrl: '/tenant/stock',
+    sidebar: [
+      { key: 'categories', icon: 'Folder', label: 'nav.categories', url: '/tenant/categories', permission: 'categories.read' },
+      { key: 'items', icon: 'Goods', label: 'nav.items', url: '/tenant/items', permission: 'items.read' },
+      { key: 'stock', icon: 'Box', label: 'nav.stock', url: '/tenant/stock', permission: 'inventory.read' },
+      { key: 'stock-txns', icon: 'List', label: 'nav.stock_txns', url: '/tenant/stock/txns', permission: 'stock_txn.read' },
+      { key: 'stock-adjust', icon: 'Tools', label: 'nav.stock_adjust', url: '/tenant/stock/adjust', permission: 'inventory.adjust' },
+      { key: 'stock-stocktake', icon: 'Histogram', label: 'nav.stocktake', url: '/tenant/stock/stocktake', permission: 'stocktake.write' },
+      { key: 'stock-damage', icon: 'Tickets', label: 'nav.damage', url: '/tenant/stock/damage', permission: 'damage.write' },
+      { key: 'inventory-config', icon: 'Setting', label: 'nav.inventory_config', url: '/tenant/settings/inventory', permission: 'inventory_config.read' },
+    ],
+  },
+  {
     key: 'settings',
     label: 'nav.settings',
     defaultUrl: '/tenant/users',
