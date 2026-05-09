@@ -14,4 +14,5 @@ return [
     TenancyServiceProvider::class,
     AuthorizationServiceProvider::class,
     CatalogServiceProvider::class,
+    App\Modules\Inventory\InventoryServiceProvider::class,
 ];
