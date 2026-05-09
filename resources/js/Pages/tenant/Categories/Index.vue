@@ -42,7 +42,11 @@ const tree = computed(() => {
 })
 
 const onDelete = async (id: string, name: string) => {
-  await ElMessageBox.confirm(`确认删除分类「${name}」？`, '删除', { type: 'warning' })
+  try {
+    await ElMessageBox.confirm(`确认删除分类「${name}」？`, '删除', { type: 'warning' })
+  } catch {
+    return
+  }
   router.delete(`/tenant/categories/${id}`, {
     onSuccess: () => ElMessage.success('已删除'),
   })
