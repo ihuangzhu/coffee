@@ -11,6 +11,7 @@ use App\Modules\Identity\Http\Controllers\Web\TenantProfileController;
 use App\Modules\Identity\Http\Controllers\Web\TenantUserController;
 use App\Modules\Tenancy\Http\Controllers\Platform\PlatformStoreController;
 use App\Modules\Tenancy\Http\Controllers\Platform\PlatformTenantController;
+use App\Modules\Inventory\Http\Controllers\Web\TenantInventoryConfigController;
 use App\Modules\Inventory\Http\Controllers\Web\TenantStockController;
 use App\Modules\Inventory\Http\Controllers\Web\TenantStockMutationController;
 use App\Modules\Tenancy\Http\Controllers\Web\TenantStoreController;
@@ -132,6 +133,9 @@ Route::prefix('tenant')->middleware('auth')->group(function () use ($paginated, 
     Route::post('items', [TenantItemController::class, 'storeFromForm']);
     Route::get('items/{id}/edit', [TenantItemController::class, 'edit']);
     Route::patch('items/{id}', [TenantItemController::class, 'update']);
+
+    Route::get('settings/inventory', [TenantInventoryConfigController::class, 'show']);
+    Route::patch('settings/inventory', [TenantInventoryConfigController::class, 'update']);
 
     Route::get('stock', [TenantStockController::class, 'index']);
     Route::get('stock/txns', [TenantStockController::class, 'txns']);
