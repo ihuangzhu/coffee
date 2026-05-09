@@ -5,9 +5,11 @@
 export default {
   dashboard: '仪表盘',
   overview: '概览',
+  items_module: '物料',
   inventory: '库存',
   categories: '分类',
   items: '物料',
+  bom: 'BOM',
   stock: '库存',
   stock_txns: '流水',
   stock_adjust: '调整',

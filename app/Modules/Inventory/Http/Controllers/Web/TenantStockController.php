@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Inventory\Http\Controllers\Web;
 
-use App\Modules\Catalog\Models\Item;
 use App\Modules\Catalog\Models\ItemSku;
-use App\Modules\Tenancy\Models\Store;
 use App\Modules\Inventory\Models\StockBalance;
 use App\Modules\Inventory\Models\StockOwner;
 use App\Modules\Inventory\Models\StockTxn;
@@ -27,14 +25,10 @@ class TenantStockController extends Controller
     {
         $tenantId = $this->requireCurrentTenant($request);
 
-        $storeId = (string) $request->query('store_id', '');
+        $storeId = (string) $request->session()->get('current_store_id', '');
         $q = trim((string) $request->query('q', ''));
         $page = max(1, (int) $request->query('page', 1));
         $pageSize = min(100, max(5, (int) $request->query('per_page', 20)));
-
-        $stores = Store::query()->withoutGlobalScopes()
-            ->where('tenant_id', $tenantId)->orderBy('name')
-            ->get(['id', 'name'])->toArray();
 
         $rows = [];
         $total = 0;
@@ -86,7 +80,6 @@ class TenantStockController extends Controller
         }
 
         return Inertia::render('tenant/Stock/Index', [
-            'stores' => $stores,
             'store_id' => $storeId,
             'rows' => $rows,
             'total' => $total,

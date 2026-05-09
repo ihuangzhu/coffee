@@ -18,7 +18,7 @@ class TenantInventoryConfigController extends Controller
     public function show(Request $request): Response
     {
         $tenantId = $this->requireCurrentTenant($request);
-        $cfg = TenantInventoryConfig::query()->where('tenant_id', $tenantId)->firstOrFail();
+        $cfg = TenantInventoryConfig::query()->firstOrCreate(['tenant_id' => $tenantId]);
 
         return Inertia::render('tenant/Settings/InventoryConfig', [
             'config' => [

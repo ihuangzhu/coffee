@@ -47,12 +47,20 @@ export const tenantModules: ModuleNav[] = [
     ],
   },
   {
+    key: 'items',
+    label: 'nav.items_module',
+    defaultUrl: '/tenant/items',
+    sidebar: [
+      { key: 'categories', icon: 'Folder', label: 'nav.categories', url: '/tenant/categories', permission: 'categories.read' },
+      { key: 'items', icon: 'Goods', label: 'nav.items', url: '/tenant/items', permission: 'items.read' },
+      { key: 'boms', icon: 'Connection', label: 'nav.bom', url: '/tenant/boms', permission: 'bom.read' },
+    ],
+  },
+  {
     key: 'inventory',
     label: 'nav.inventory',
     defaultUrl: '/tenant/stock',
     sidebar: [
-      { key: 'categories', icon: 'Folder', label: 'nav.categories', url: '/tenant/categories', permission: 'categories.read' },
-      { key: 'items', icon: 'Goods', label: 'nav.items', url: '/tenant/items', permission: 'items.read' },
       { key: 'stock', icon: 'Box', label: 'nav.stock', url: '/tenant/stock', permission: 'inventory.read' },
       { key: 'stock-txns', icon: 'List', label: 'nav.stock_txns', url: '/tenant/stock/txns', permission: 'stock_txn.read' },
       { key: 'stock-adjust', icon: 'Tools', label: 'nav.stock_adjust', url: '/tenant/stock/adjust', permission: 'inventory.adjust' },

@@ -26,7 +26,7 @@ beforeEach(function () {
         ->withSession(['current_tenant_id' => $this->tenant->id]);
 });
 
-test('GET /tenant/stock 无 store_id 时返回空 rows', function () {
+test('GET /tenant/stock 未选门店时返回空 rows', function () {
     $this->get('/tenant/stock')
         ->assertOk()
         ->assertInertia(fn ($p) => $p
@@ -36,7 +36,7 @@ test('GET /tenant/stock 无 store_id 时返回空 rows', function () {
         );
 });
 
-test('GET /tenant/stock?store_id= 返回该门店库存', function () {
+test('GET /tenant/stock 已选门店时返回该门店库存', function () {
     $owner = StockOwner::query()->withoutGlobalScopes()
         ->where('owner_ref_id', $this->store->id)->first();
     $location = StockLocation::query()->withoutGlobalScopes()
@@ -50,7 +50,10 @@ test('GET /tenant/stock?store_id= 返回该门店库存', function () {
         $sku->id, '100', 'IN', 'INITIAL', $this->actor->id,
     );
 
-    $this->get('/tenant/stock?store_id='.$this->store->id)
+    $this->withSession([
+        'current_tenant_id' => $this->tenant->id,
+        'current_store_id' => $this->store->id,
+    ])->get('/tenant/stock')
         ->assertInertia(fn ($p) => $p
             ->where('total', 1)
             ->where('rows.0.item_name', '咖啡豆')

@@ -20,7 +20,10 @@ class TenantStoreInventoryConfigController extends Controller
         $tenantId = $this->requireCurrentTenant($request);
         $store = Store::query()->withoutGlobalScopes()
             ->where('tenant_id', $tenantId)->whereKey($storeId)->firstOrFail();
-        $cfg = StoreInventoryConfig::query()->where('store_id', $storeId)->firstOrFail();
+        $cfg = StoreInventoryConfig::query()->firstOrCreate(
+            ['store_id' => $storeId],
+            ['tenant_id' => $tenantId],
+        );
 
         return Inertia::render('tenant/Stores/InventoryConfig', [
             'store' => ['id' => $store->id, 'name' => $store->name],

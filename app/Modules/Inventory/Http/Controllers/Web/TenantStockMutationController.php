@@ -60,7 +60,7 @@ class TenantStockMutationController extends Controller
             (string) $request->user()->id,
         );
 
-        return redirect('/tenant/stock?store_id='.$data['store_id'])
+        return redirect('/tenant/stock')
             ->with('success', '调整已记录');
     }
 
@@ -80,7 +80,7 @@ class TenantStockMutationController extends Controller
             (string) $data['actual_qty'], (string) $request->user()->id, $data['note'] ?? null,
         );
 
-        return redirect('/tenant/stock?store_id='.$data['store_id'])
+        return redirect('/tenant/stock')
             ->with('success', '盘点已记录');
     }
 
@@ -102,7 +102,7 @@ class TenantStockMutationController extends Controller
             (string) $request->user()->id, $data['reason'] ?? null,
         );
 
-        return redirect('/tenant/stock?store_id='.$data['store_id'])
+        return redirect('/tenant/stock')
             ->with('success', '报损已记录');
     }
 
