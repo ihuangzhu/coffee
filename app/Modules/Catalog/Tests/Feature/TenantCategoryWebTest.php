@@ -14,16 +14,21 @@ beforeEach(function () {
     $this->tenant = Tenant::factory()->create();
     $this->actor = User::factory()->create();
     Membership::factory()->create([
-        'user_id' => $this->actor->id, 'tenant_id' => $this->tenant->id, 'store_id' => null,
+        'user_id' => $this->actor->id,
+        'tenant_id' => $this->tenant->id,
+        'store_id' => null,
     ]);
     $this->actingAs($this->actor, 'web')
         ->withSession(['current_tenant_id' => $this->tenant->id]);
 });
 
-test('GET /tenant/categories 列出本租户分类', function () {
-    Category::factory()->create(['tenant_id' => $this->tenant->id, 'name' => '咖啡', 'sort' => 1]);
-    Category::factory()->create(['tenant_id' => $this->tenant->id, 'name' => '甜品', 'sort' => 2]);
-    // 别家租户
+test('GET /tenant/categories 列出树形（含 path/level/owner_type/category_type）', function () {
+    $root = Category::factory()->create([
+        'tenant_id' => $this->tenant->id, 'name' => '饮品', 'code' => 'B-DRINK',
+    ]);
+    Category::factory()->child($root)->create([
+        'tenant_id' => $this->tenant->id, 'name' => '奶茶', 'code' => 'B-DRINK-MILKTEA',
+    ]);
     $other = Tenant::factory()->create();
     Category::factory()->create(['tenant_id' => $other->id]);
 
@@ -31,48 +36,135 @@ test('GET /tenant/categories 列出本租户分类', function () {
         ->assertOk()
         ->assertInertia(fn ($p) => $p
             ->component('tenant/Categories/Index')
-            ->where('total', 2)
             ->has('rows', 2)
-            ->where('rows.0.name', '咖啡')
+            ->where('rows.0.name', '饮品')
+            ->where('rows.0.level', 1)
+            ->where('rows.0.path', '/')
+            ->where('rows.1.name', '奶茶')
+            ->where('rows.1.level', 2)
         );
 });
 
-test('POST /tenant/categories 新建分类', function () {
-    $this->post('/tenant/categories', ['name' => '冷饮', 'sort' => 5])
-        ->assertRedirect('/tenant/categories');
+test('POST /tenant/categories 新建顶级分类（path=/、level=1）', function () {
+    $this->post('/tenant/categories', [
+        'owner_type' => 'TENANT',
+        'category_type' => 'BUSINESS',
+        'item_type_scope' => 'ALL',
+        'name' => '冷饮',
+        'code' => 'B-COLD',
+        'sort_no' => 5,
+        'status' => 'active',
+    ])->assertRedirect('/tenant/categories');
 
-    expect(Category::query()->withoutGlobalScopes()
+    $cat = Category::query()->withoutGlobalScopes()
         ->where('tenant_id', $this->tenant->id)
-        ->where('name', '冷饮')->where('sort', 5)->exists())->toBeTrue();
+        ->where('code', 'B-COLD')->first();
+    expect($cat)->not->toBeNull();
+    expect($cat->level)->toBe(1);
+    expect($cat->path)->toBe('/');
+    expect($cat->parent_id)->toBeNull();
 });
 
-test('POST 同租户内 name 重复 422', function () {
-    Category::factory()->create(['tenant_id' => $this->tenant->id, 'name' => '咖啡']);
+test('POST /tenant/categories 新建子分类（自动计算 path/level）', function () {
+    $root = Category::factory()->create([
+        'tenant_id' => $this->tenant->id, 'name' => '饮品',
+    ]);
 
-    $this->post('/tenant/categories', ['name' => '咖啡'])->assertSessionHasErrors('name');
+    $this->post('/tenant/categories', [
+        'owner_type' => 'TENANT',
+        'category_type' => 'BUSINESS',
+        'item_type_scope' => 'SALE_PRODUCT',
+        'parent_id' => $root->id,
+        'name' => '奶茶',
+    ])->assertRedirect('/tenant/categories');
+
+    $child = Category::query()->withoutGlobalScopes()
+        ->where('tenant_id', $this->tenant->id)
+        ->where('name', '奶茶')->first();
+    expect($child->parent_id)->toBe($root->id);
+    expect($child->level)->toBe(2);
+    expect($child->path)->toBe('/'.$root->id.'/');
 });
 
-test('PATCH /tenant/categories/{id} 改名 + 排序', function () {
-    $c = Category::factory()->create(['tenant_id' => $this->tenant->id, 'name' => '旧', 'sort' => 0]);
+test('POST 同 tenant 下 code 重复 → 422', function () {
+    Category::factory()->create([
+        'tenant_id' => $this->tenant->id, 'code' => 'B-DRINK',
+    ]);
 
-    $this->patch("/tenant/categories/{$c->id}", ['name' => '新', 'sort' => 9])
-        ->assertRedirect();
-
-    $c->refresh();
-    expect($c->name)->toBe('新');
-    expect((int) $c->sort)->toBe(9);
+    $this->post('/tenant/categories', [
+        'owner_type' => 'TENANT',
+        'category_type' => 'BUSINESS',
+        'item_type_scope' => 'ALL',
+        'name' => '其他',
+        'code' => 'B-DRINK',
+    ])->assertSessionHasErrors('code');
 });
 
-test('PATCH 跨租户 404', function () {
+test('POST owner_type=STORE 但 owner_store_id 缺失 → 422', function () {
+    $this->post('/tenant/categories', [
+        'owner_type' => 'STORE',
+        'category_type' => 'BUSINESS',
+        'item_type_scope' => 'ALL',
+        'name' => '门店限定',
+    ])->assertSessionHasErrors('owner_store_id');
+});
+
+test('PATCH 不允许把分类挂到自身的子树下', function () {
+    $root = Category::factory()->create([
+        'tenant_id' => $this->tenant->id, 'name' => 'A',
+    ]);
+    $child = Category::factory()->child($root)->create([
+        'tenant_id' => $this->tenant->id, 'name' => 'A.1',
+    ]);
+
+    $this->patch("/tenant/categories/{$root->id}", [
+        'owner_type' => 'TENANT',
+        'category_type' => 'BUSINESS',
+        'item_type_scope' => 'ALL',
+        'parent_id' => $child->id,
+        'name' => 'A',
+    ])->assertSessionHasErrors('parent_id');
+});
+
+test('DELETE 有子分类时禁止删除', function () {
+    $root = Category::factory()->create(['tenant_id' => $this->tenant->id]);
+    Category::factory()->child($root)->create(['tenant_id' => $this->tenant->id]);
+
+    $this->delete("/tenant/categories/{$root->id}")
+        ->assertSessionHasErrors('category');
+
+    expect(Category::query()->withoutGlobalScopes()->find($root->id))->not->toBeNull();
+});
+
+test('DELETE 无子分类、无 item 引用时软删除', function () {
+    $cat = Category::factory()->create(['tenant_id' => $this->tenant->id]);
+
+    $this->delete("/tenant/categories/{$cat->id}");
+
+    expect(Category::query()->withoutGlobalScopes()->withoutTrashed()->find($cat->id))->toBeNull();
+    expect(Category::query()->withoutGlobalScopes()->withTrashed()->find($cat->id))
+        ->not->toBeNull();
+});
+
+test('跨租户隔离：他租户分类不可访问', function () {
     $other = Tenant::factory()->create();
-    $c = Category::factory()->create(['tenant_id' => $other->id]);
+    $otherCat = Category::factory()->create(['tenant_id' => $other->id]);
 
-    $this->patch("/tenant/categories/{$c->id}", ['name' => 'X'])->assertNotFound();
+    $this->get("/tenant/categories/{$otherCat->id}/edit")->assertNotFound();
 });
 
-test('DELETE 闲置删除', function () {
-    $c = Category::factory()->create(['tenant_id' => $this->tenant->id]);
+test('父子 owner 不一致 → 422', function () {
+    $parent = Category::factory()->create([
+        'tenant_id' => $this->tenant->id,
+        'owner_type' => 'TENANT', 'owner_store_id' => null,
+    ]);
 
-    $this->delete("/tenant/categories/{$c->id}")->assertRedirect();
-    expect(Category::query()->withoutGlobalScopes()->whereKey($c->id)->exists())->toBeFalse();
+    $this->post('/tenant/categories', [
+        'owner_type' => 'STORE',
+        'owner_store_id' => str_repeat('0', 26),
+        'category_type' => 'BUSINESS',
+        'item_type_scope' => 'ALL',
+        'parent_id' => $parent->id,
+        'name' => '门店子分类',
+    ])->assertSessionHasErrors('parent_id');
 });
