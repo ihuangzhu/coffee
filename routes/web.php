@@ -12,6 +12,7 @@ use App\Modules\Identity\Http\Controllers\Web\TenantUserController;
 use App\Modules\Tenancy\Http\Controllers\Platform\PlatformStoreController;
 use App\Modules\Tenancy\Http\Controllers\Platform\PlatformTenantController;
 use App\Modules\Inventory\Http\Controllers\Web\TenantStockController;
+use App\Modules\Inventory\Http\Controllers\Web\TenantStockMutationController;
 use App\Modules\Tenancy\Http\Controllers\Web\TenantStoreController;
 use App\Support\Tenancy\WebTenantAccess;
 use Illuminate\Support\Facades\Auth;
@@ -134,6 +135,13 @@ Route::prefix('tenant')->middleware('auth')->group(function () use ($paginated, 
 
     Route::get('stock', [TenantStockController::class, 'index']);
     Route::get('stock/txns', [TenantStockController::class, 'txns']);
+    Route::get('stock/adjust', [TenantStockMutationController::class, 'adjustForm']);
+    Route::post('stock/adjust', [TenantStockMutationController::class, 'adjust']);
+    Route::get('stock/stocktake', [TenantStockMutationController::class, 'stocktakeForm']);
+    Route::post('stock/stocktake', [TenantStockMutationController::class, 'stocktake']);
+    Route::get('stock/damage', [TenantStockMutationController::class, 'damageForm']);
+    Route::post('stock/damage', [TenantStockMutationController::class, 'damage']);
+    Route::post('stock/txns/{id}/reverse', [TenantStockMutationController::class, 'reverse']);
 
     Route::get('stores', [TenantStoreController::class, 'index']);
     Route::get('stores/{storeId}/users', [StoreUserController::class, 'index']);
