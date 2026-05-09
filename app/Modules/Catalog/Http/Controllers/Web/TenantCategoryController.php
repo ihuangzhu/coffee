@@ -197,7 +197,28 @@ class TenantCategoryController extends Controller
                 'FINISHED_GOOD', 'SERVICE', 'PACKAGE', 'ALL',
             ])],
             'parent_id' => ['nullable', 'string', 'size:26'],
-            'name' => ['required', 'string', 'max:100'],
+            'name' => ['required', 'string', 'max:100',
+                Rule::unique('categories', 'name')
+                    ->ignore($ignoreId)
+                    ->where(function ($q) use ($tenantId, $request) {
+                        $q->where('tenant_id', $tenantId)
+                          ->where('owner_type', $request->input('owner_type'));
+
+                        $ownerStoreId = $request->input('owner_store_id');
+                        if ($ownerStoreId === null || $ownerStoreId === '') {
+                            $q->whereNull('owner_store_id');
+                        } else {
+                            $q->where('owner_store_id', $ownerStoreId);
+                        }
+
+                        $parentId = $request->input('parent_id');
+                        if ($parentId === null || $parentId === '') {
+                            $q->whereNull('parent_id');
+                        } else {
+                            $q->where('parent_id', $parentId);
+                        }
+                    }),
+            ],
             'code' => ['nullable', 'string', 'max:64',
                 Rule::unique('categories', 'code')
                     ->ignore($ignoreId)
