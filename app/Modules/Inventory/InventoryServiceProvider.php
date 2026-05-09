@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Inventory;
 
+use App\Modules\Inventory\Observers\StoreConfigObserver;
 use App\Modules\Inventory\Observers\TenantConfigObserver;
+use App\Modules\Tenancy\Models\Store;
 use App\Modules\Tenancy\Models\Tenant;
 use App\Support\ModuleServiceProvider;
 
@@ -19,5 +21,6 @@ class InventoryServiceProvider extends ModuleServiceProvider
     {
         parent::boot();
         Tenant::observe(TenantConfigObserver::class);
+        Store::observe(StoreConfigObserver::class);
     }
 }
