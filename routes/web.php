@@ -12,6 +12,7 @@ use App\Modules\Identity\Http\Controllers\Web\TenantUserController;
 use App\Modules\Tenancy\Http\Controllers\Platform\PlatformStoreController;
 use App\Modules\Tenancy\Http\Controllers\Platform\PlatformTenantController;
 use App\Modules\Inventory\Http\Controllers\Web\TenantBomController;
+use App\Modules\Inventory\Http\Controllers\Web\TenantProduceController;
 use App\Modules\Inventory\Http\Controllers\Web\TenantInventoryConfigController;
 use App\Modules\Inventory\Http\Controllers\Web\TenantStoreInventoryConfigController;
 use App\Modules\Inventory\Http\Controllers\Web\TenantStockController;
@@ -142,6 +143,10 @@ Route::prefix('tenant')->middleware('auth')->group(function () use ($paginated, 
     Route::get('boms/{id}/edit', [TenantBomController::class, 'edit']);
     Route::patch('boms/{id}', [TenantBomController::class, 'update']);
     Route::delete('boms/{id}', [TenantBomController::class, 'destroy']);
+
+    Route::get('produce/preview', [TenantProduceController::class, 'preview']);
+    Route::get('produce', [TenantProduceController::class, 'create']);
+    Route::post('produce', [TenantProduceController::class, 'store']);
 
     Route::get('settings/inventory', [TenantInventoryConfigController::class, 'show']);
     Route::patch('settings/inventory', [TenantInventoryConfigController::class, 'update']);
