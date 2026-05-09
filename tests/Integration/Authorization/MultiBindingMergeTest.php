@@ -33,11 +33,17 @@ test('一人多 binding 权限并集生效（StoreManager@S1 + StoreClerk@S2）'
     Sanctum::actingAs($u);
     $resp = $this->withHeaders(['X-Tenant-Id' => $t->id])->getJson('/api/me/permissions');
 
-    // StoreManager: roles.read, users.read, tenant.read, stores.read
-    // StoreClerk:                          tenant.read, stores.read
-    // 并集: roles.read, users.read, tenant.read, stores.read
+    // StoreManager: roles.read, users.read, tenant.read, stores.read + 14 inventory perms
+    // StoreClerk:   tenant.read, stores.read + 8 inventory perms (all subset of StoreManager)
+    // 并集: StoreManager 的全部 18 个权限
     expect($resp->json('effective_permissions'))->toEqualCanonicalizing([
         'roles.read', 'users.read', 'tenant.read', 'stores.read',
+        'items.read', 'items.write', 'item_skus.read', 'item_skus.write',
+        'categories.read', 'categories.write',
+        'inventory.read', 'inventory.adjust',
+        'stocktake.write', 'damage.write',
+        'stock_txn.read', 'stock_txn.reverse',
+        'inventory_config.read', 'inventory_policy.read',
     ]);
 
     // role_bindings_count 反映两条 active

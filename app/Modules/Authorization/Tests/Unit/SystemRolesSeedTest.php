@@ -14,17 +14,32 @@ test('migrate 后 roles 有 3 个全局模板（is_system=true）', function () 
     expect($codes)->toBe(['StoreClerk', 'StoreManager', 'TenantAdmin']);
 });
 
-test('TenantAdmin 含全部 6 个商户域权限', function () {
+test('TenantAdmin 含全部商户域权限（含库存模块）', function () {
     $r = Role::query()->where('code', 'TenantAdmin')->whereNull('tenant_id')->firstOrFail();
     expect($r->permissions)->toEqualCanonicalizing([
         'roles.read', 'roles.manage', 'users.read', 'users.assign-role', 'tenant.read', 'stores.read',
+        'items.read', 'items.write', 'item_skus.read', 'item_skus.write',
+        'categories.read', 'categories.write',
+        'inventory.read', 'inventory.adjust',
+        'stocktake.write', 'damage.write',
+        'stock_txn.read', 'stock_txn.reverse',
+        'inventory_config.read', 'inventory_config.update',
+        'inventory_policy.read', 'inventory_policy.update',
     ]);
     expect($r->scope)->toBe('tenant');
 });
 
-test('StoreManager 含读类权限，scope=store', function () {
+test('StoreManager 含读类权限（含库存模块），scope=store', function () {
     $r = Role::query()->where('code', 'StoreManager')->whereNull('tenant_id')->firstOrFail();
-    expect($r->permissions)->toEqualCanonicalizing(['roles.read', 'users.read', 'tenant.read', 'stores.read']);
+    expect($r->permissions)->toEqualCanonicalizing([
+        'roles.read', 'users.read', 'tenant.read', 'stores.read',
+        'items.read', 'items.write', 'item_skus.read', 'item_skus.write',
+        'categories.read', 'categories.write',
+        'inventory.read', 'inventory.adjust',
+        'stocktake.write', 'damage.write',
+        'stock_txn.read', 'stock_txn.reverse',
+        'inventory_config.read', 'inventory_policy.read',
+    ]);
     expect($r->scope)->toBe('store');
 });
 
