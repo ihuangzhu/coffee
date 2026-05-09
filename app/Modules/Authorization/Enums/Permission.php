@@ -18,4 +18,22 @@ enum Permission: string
     case UsersAssignRole = 'users.assign-role';
     case TenantRead = 'tenant.read';
     case StoresRead = 'stores.read';
+
+    // ── Inventory 模块（Task 20）
+    case ItemsRead = 'items.read';
+    case ItemsWrite = 'items.write';
+    case ItemSkusRead = 'item_skus.read';
+    case ItemSkusWrite = 'item_skus.write';
+    case CategoriesRead = 'categories.read';
+    case CategoriesWrite = 'categories.write';
+    case InventoryRead = 'inventory.read';
+    case InventoryAdjust = 'inventory.adjust';
+    case StocktakeWrite = 'stocktake.write';
+    case DamageWrite = 'damage.write';
+    case StockTxnRead = 'stock_txn.read';
+    case StockTxnReverse = 'stock_txn.reverse';
+    case InventoryConfigRead = 'inventory_config.read';
+    case InventoryConfigUpdate = 'inventory_config.update';
+    case InventoryPolicyRead = 'inventory_policy.read';
+    case InventoryPolicyUpdate = 'inventory_policy.update';
 }
