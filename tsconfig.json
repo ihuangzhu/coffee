@@ -14,8 +14,7 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
-    "baseUrl": ".",
-    "paths": { "@/*": ["resources/js/*"] },
+    "paths": { "@/*": ["./resources/js/*"] },
     "types": ["vite/client", "node"],
     "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },

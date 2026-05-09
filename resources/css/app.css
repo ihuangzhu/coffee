@@ -1,1 +1,139 @@
-@import 'tailwindcss';
+@import "tailwindcss";
+
+:root {
+    /* ───────── 字体 ───────── */
+    --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'PingFang SC',
+                 'Microsoft YaHei', system-ui, sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
+
+    /* ───────── 中性灰阶（slate） ───────── */
+    --slate-50:  #F8FAFC;
+    --slate-100: #F1F5F9;
+    --slate-200: #E2E8F0;
+    --slate-300: #CBD5E1;
+    --slate-400: #94A3B8;
+    --slate-500: #64748B;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1E293B;
+    --slate-900: #0F172A;
+
+    /* ───────── 主色（indigo） ───────── */
+    --primary:        #4F46E5;
+    --primary-hover:  #4338CA;
+    --primary-deep:   #3730A3;
+    --primary-soft:   #EEF2FF;
+    --primary-soft-2: #E0E7FF;
+
+    /* ───────── 状态色 ───────── */
+    --ok:         #10B981;
+    --ok-soft:    #ECFDF5;
+    --ok-text:    #047857;
+    --warn:       #F59E0B;
+    --warn-soft:  #FFFBEB;
+    --warn-text:  #B45309;
+    --danger:     #EF4444;
+    --danger-soft:#FEF2F2;
+    --danger-text:#B91C1C;
+    --info:       #0EA5E9;
+    --info-soft:  #F0F9FF;
+    --info-text:  #0369A1;
+
+    /* ───────── 主题别名（默认 = 租户后台浅色） ───────── */
+    --bg:          var(--slate-50);
+    --surface:     #FFFFFF;
+    --topbar:      #FFFFFF;
+    --sidebar:     #FFFFFF;
+    --border:      var(--slate-200);
+    --border-soft: var(--slate-100);
+    --text:        var(--slate-900);
+    --text-mid:    var(--slate-700);
+    --text-muted:  var(--slate-500);
+    --text-faint:  var(--slate-400);
+    --accent:      var(--primary);
+    --accent-soft: var(--primary-soft);
+
+    /* ───────── 形状 ───────── */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 10px;
+
+    /* ───────── 阴影 ───────── */
+    --shadow:    0 1px 2px rgba(15, 23, 42, .04), 0 4px 16px -4px rgba(15, 23, 42, .06);
+    --shadow-lg: 0 12px 32px -10px rgba(15, 23, 42, .12), 0 1px 0 rgba(15, 23, 42, .04);
+
+    /* ───────── 旧 token alias（保留 1 个迭代，给未迁移业务页面兜底） ───────── */
+    --color-primary:       var(--primary);
+    --color-primary-hover: var(--primary-hover);
+    --color-primary-soft:  var(--primary-soft);
+    --color-danger:        var(--danger);
+    --color-success:       var(--ok);
+    --color-warning:       var(--warn);
+    --color-bg:            var(--bg);
+    --color-card:          var(--surface);
+    --color-sidebar:       var(--sidebar);
+    --color-sidebar-dark:  var(--slate-900);
+    --color-border:        var(--border);
+    --color-text:          var(--text);
+    --color-text-muted:    var(--text-muted);
+    --shadow-card:         var(--shadow);
+    --shadow-overlay:      var(--shadow-lg);
+
+    /* ───────── Element Plus token 覆盖 ───────── */
+    --el-color-primary:           var(--primary);
+    --el-color-primary-light-9:   var(--primary-soft);
+    --el-color-danger:            var(--danger);
+    --el-color-success:           var(--ok);
+    --el-color-warning:           var(--warn);
+    --el-border-radius-base:      var(--radius-sm);
+    --el-border-color:            var(--border);
+    --el-text-color-primary:      var(--text);
+    --el-text-color-regular:      var(--text);
+    --el-table-row-hover-bg-color:var(--slate-50);
+    --el-font-family:             var(--font-sans);
+}
+
+/* ───────── 平台后台主题：仅覆盖 sidebar 相关 alias ───────── */
+.platform-layout {
+    --sidebar:           var(--slate-900);
+    --side-text:         var(--slate-200);
+    --side-text-mid:     var(--slate-300);
+    --side-text-muted:   var(--slate-400);
+    --side-text-faint:   var(--slate-500);
+    --side-hover:        rgba(255, 255, 255, 0.06);
+    --side-active-bg:    rgba(99, 102, 241, 0.18);
+    --side-active-text:  #C7D2FE; /* indigo-200 */
+    --side-border:       rgba(255, 255, 255, 0.08);
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* 等宽数字字体类：用于金额、单据号等需对齐的数字 */
+.font-mono-num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+/* 紧凑表格 row 高度：减少 EP 默认 padding 让密集数据表更紧凑 */
+.el-table .el-table__row > td.el-table__cell {
+    padding: 6px 0;
+}
+
+/* 抖动动画：用于表单校验失败/支付失败等错误反馈 */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-4px); }
+    40%, 80% { transform: translateX(4px); }
+}
+.shake { animation: shake 0.4s; }
+
+/* 焦点环：键盘可访问性 — 仅在 :focus-visible 时显示，鼠标点击不出现 */
+*:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}

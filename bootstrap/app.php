@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Modules\Authorization\Http\Middleware\PermissionMiddleware;
 use App\Modules\Authorization\Http\Middleware\PlatformPermissionMiddleware;
+use App\Modules\Identity\Http\Middleware\EnsurePlatformAdminWeb;
 use App\Modules\Identity\Http\Middleware\PlatformAdminMiddleware;
 use App\Modules\Identity\Http\Middleware\TenantMiddleware;
 use App\Support\Exceptions\BusinessException;
@@ -24,10 +25,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'platform_admin' => PlatformAdminMiddleware::class,
             'permission' => PermissionMiddleware::class,
             'platform_permission' => PlatformPermissionMiddleware::class,
+            'web.platform_admin' => EnsurePlatformAdminWeb::class,
         ]);
         $middleware->web(append: [
             HandleInertiaRequests::class,
         ]);
+        $middleware->redirectGuestsTo(fn ($request) => $request->is('platform/*') ? '/platform/login' : '/login');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (BusinessException $e, $request) {
