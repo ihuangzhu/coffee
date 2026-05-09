@@ -25,6 +25,8 @@ test('TenantAdmin 含全部商户域权限（含库存模块）', function () {
         'stock_txn.read', 'stock_txn.reverse',
         'inventory_config.read', 'inventory_config.update',
         'inventory_policy.read', 'inventory_policy.update',
+        'boms.read', 'boms.create', 'boms.update', 'boms.delete',
+        'production.execute', 'production.read',
     ]);
     expect($r->scope)->toBe('tenant');
 });
@@ -39,6 +41,8 @@ test('StoreManager 含读类权限（含库存模块），scope=store', function
         'stocktake.write', 'damage.write',
         'stock_txn.read', 'stock_txn.reverse',
         'inventory_config.read', 'inventory_policy.read',
+        'boms.read', 'boms.create', 'boms.update',
+        'production.execute', 'production.read',
     ]);
     expect($r->scope)->toBe('store');
 });

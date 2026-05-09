@@ -36,4 +36,12 @@ enum Permission: string
     case InventoryConfigUpdate = 'inventory_config.update';
     case InventoryPolicyRead = 'inventory_policy.read';
     case InventoryPolicyUpdate = 'inventory_policy.update';
+
+    // ── BOM / 生产入库（2026-05-09 BOM Action 阶段）
+    case BomsRead = 'boms.read';
+    case BomsCreate = 'boms.create';
+    case BomsUpdate = 'boms.update';
+    case BomsDelete = 'boms.delete';
+    case ProductionExecute = 'production.execute';
+    case ProductionRead = 'production.read';
 }
