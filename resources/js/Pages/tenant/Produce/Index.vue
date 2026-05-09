@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { FormDataConvertible } from '@inertiajs/core'
 import { router } from '@inertiajs/vue3'
+import axios from '@/lib/axios'
 import {
   ElButton,
   ElCollapse,
@@ -73,24 +74,22 @@ async function fetchPreview() {
     preview.value = null
     return
   }
-  const params = new URLSearchParams({
-    store_id: form.store_id,
-    bom_id: form.bom_id,
-    batch_qty: String(form.batch_qty),
-  })
-  const resp = await fetch('/tenant/produce/preview?' + params.toString(), {
-    headers: { Accept: 'application/json' },
-  })
-  if (resp.ok) {
-    preview.value = await resp.json()
-  } else {
+  try {
+    const { data } = await axios.get<Preview>('/tenant/produce/preview', {
+      params: {
+        store_id: form.store_id,
+        bom_id: form.bom_id,
+        batch_qty: form.batch_qty,
+      },
+    })
+    preview.value = data
+  } catch {
     preview.value = null
+    ElMessage.error('预览失败，请检查输入')
   }
 }
 
-watch(() => [form.store_id, form.bom_id, form.batch_qty] as const, fetchPreview, {
-  immediate: false,
-})
+watch(() => [form.store_id, form.bom_id, form.batch_qty] as const, fetchPreview)
 
 function submit() {
   if (!allSufficient.value) {

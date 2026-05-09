@@ -43,10 +43,15 @@ class TenantProduceController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $tenantId = $this->requireCurrentTenant($request);
+        // Tenant-scoped Rule::exists for both store_id and bom_id keeps the validation contract
+        // symmetric: cross-tenant ids → 422 with field-level errors. Inertia surfaces these inline.
         $data = $request->validate([
             'store_id' => ['required', 'string', 'size:26',
                 Rule::exists('stores', 'id')->where('tenant_id', $tenantId)],
-            'bom_id' => ['required', 'string', 'size:26'],
+            'bom_id' => ['required', 'string', 'size:26',
+                Rule::exists('boms', 'id')
+                    ->where('tenant_id', $tenantId)
+                    ->whereNull('deleted_at')],
             'batch_qty' => ['required', 'numeric', 'gt:0'],
             'source_location_id' => ['nullable', 'string', 'size:26'],
             'output_location_id' => ['nullable', 'string', 'size:26'],
@@ -63,7 +68,15 @@ class TenantProduceController extends Controller
                 $data['output_location_id'] ?? null,
             );
         } catch (BusinessException $e) {
-            abort($e->httpStatus(), $e->getMessage());
+            // Convert to ValidationException so Inertia re-renders the form with inline field errors
+            // (instead of `abort()` which would render a bare error page with no form context).
+            $field = match ($e->errorCode()) {
+                'BOM_NOT_FOUND', 'BOM_STORE_MISMATCH', 'BOM_NO_COMPONENTS',
+                'INVENTORY_DISABLED' => 'bom_id',
+                'INSUFFICIENT_STOCK', 'INVALID_BATCH_QTY' => 'batch_qty',
+                default => 'bom_id',
+            };
+            throw ValidationException::withMessages([$field => $e->getMessage()]);
         }
 
         return redirect('/tenant/produce')->with('success', '生产入库已完成');
@@ -72,9 +85,15 @@ class TenantProduceController extends Controller
     public function preview(Request $request): JsonResponse
     {
         $tenantId = $this->requireCurrentTenant($request);
+        // Tenant-scoped Rule::exists on bom_id: cross-tenant bom_id → 422 validation error
+        // (consistent with the store() endpoint contract).
         $data = $request->validate([
-            'store_id' => ['required', 'string', 'size:26'],
-            'bom_id' => ['required', 'string', 'size:26'],
+            'store_id' => ['required', 'string', 'size:26',
+                Rule::exists('stores', 'id')->where('tenant_id', $tenantId)],
+            'bom_id' => ['required', 'string', 'size:26',
+                Rule::exists('boms', 'id')
+                    ->where('tenant_id', $tenantId)
+                    ->whereNull('deleted_at')],
             'batch_qty' => ['required', 'numeric', 'gt:0'],
         ]);
 

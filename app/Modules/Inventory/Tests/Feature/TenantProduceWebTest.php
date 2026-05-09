@@ -157,7 +157,10 @@ test('GET /tenant/produce/preview 返回 output + consumes 含 sufficient flag',
     $resp->assertJsonPath('consumes.0.sufficient', false);
 });
 
-test('GET /tenant/produce/preview 跨租户 bom_id → 404', function () {
+test('GET /tenant/produce/preview 跨租户 bom_id → 422 validation', function () {
+    // Contract: bom_id is validated tenant-scoped via Rule::exists, so cross-tenant
+    // bom_id surfaces as a 422 ValidationException (consistent with store_id behavior)
+    // — not a 404 from firstOrFail.
     $tenantA = Tenant::factory()->create();
     $tenantB = Tenant::factory()->create();
     $storeB  = Store::factory()->create(['tenant_id' => $tenantB->id]);
@@ -171,10 +174,13 @@ test('GET /tenant/produce/preview 跨租户 bom_id → 404', function () {
     test()->getJson(
         '/tenant/produce/preview?store_id=' . $storeB->id .
         '&bom_id=' . $crossBom->id . '&batch_qty=1'
-    )->assertNotFound();
+    )->assertStatus(422)->assertJsonValidationErrors('bom_id');
 });
 
-test('POST /tenant/produce 跨租户 bom_id → 404', function () {
+test('POST /tenant/produce 跨租户 bom_id → 422 validation', function () {
+    // Contract: bom_id is validated tenant-scoped via Rule::exists, so cross-tenant
+    // bom_id surfaces as a 422 ValidationException with field-level errors that Inertia
+    // can render inline (not a 404 page).
     $tenantA = Tenant::factory()->create();
     $tenantB = Tenant::factory()->create();
     $storeB  = Store::factory()->create(['tenant_id' => $tenantB->id]);
@@ -189,7 +195,7 @@ test('POST /tenant/produce 跨租户 bom_id → 404', function () {
         'store_id'  => $storeB->id,
         'bom_id'    => $crossBom->id,
         'batch_qty' => 1,
-    ])->assertStatus(404);
+    ])->assertSessionHasErrors('bom_id');
 });
 
 test('POST /tenant/produce 跨租户 store_id → 422', function () {
