@@ -16,7 +16,7 @@ interface Column {
   formatter?: (row: T) => string;
 }
 
-defineProps<{
+withDefaults(defineProps<{
   rows: T[];
   total: number;
   columns: Column[];
@@ -27,7 +27,13 @@ defineProps<{
   selected?: (string | number)[];
   loading?: boolean;
   tableId?: string;
-}>();
+  actionsWidth?: number | string;
+  /** seamless：去除外圈边框/圆角，让表格作为页面 chrome 的延伸（list 页推荐） */
+  seamless?: boolean;
+}>(), {
+  actionsWidth: 200,
+  seamless: false,
+});
 
 const emit = defineEmits<{
   'update:page': [n: number];
@@ -48,8 +54,12 @@ function onSelectionChange(rows: T[]) {
 </script>
 
 <template>
-  <div class="data-table rounded-[10px] overflow-hidden"
-       style="background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow);">
+  <div class="data-table overflow-hidden"
+       :style="seamless
+         ? { background: 'var(--el-bg-color)' }
+         : { background: 'var(--el-bg-color)',
+             border: '1px solid var(--el-border-color-lighter)',
+             borderRadius: 'var(--el-border-radius-base)' }">
     <el-table
       :data="rows" :loading="loading"
       style="width: 100%" row-key="id"
@@ -67,7 +77,7 @@ function onSelectionChange(rows: T[]) {
           <slot :name="`col-${col.key}`" :row="row" :index="$index" />
         </template>
       </el-table-column>
-      <el-table-column v-if="$slots.actions" label="" width="120" align="right">
+      <el-table-column v-if="$slots.actions" label="" :width="actionsWidth" align="right">
         <template #default="{ row }"><slot name="actions" :row="row" /></template>
       </el-table-column>
       <template #empty>
@@ -76,8 +86,8 @@ function onSelectionChange(rows: T[]) {
         </slot>
       </template>
     </el-table>
-    <div class="flex items-center justify-between px-5 py-3 border-t text-[12.5px]"
-         style="border-color: var(--border-soft); color: var(--text-muted)">
+    <div class="flex items-center justify-between px-5 py-2.5 border-t text-[12.5px]"
+         style="border-color: var(--el-border-color-lighter); color: var(--el-text-color-secondary)">
       <span>共 <span class="font-mono font-medium" style="color: var(--text)">{{ total }}</span> 条</span>
       <el-pagination
         :current-page="page" :page-size="pageSize" :total="total"

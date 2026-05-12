@@ -85,31 +85,35 @@ const columns = [
 
 <template>
   <Head title="用户管理" />
-  <PageHeader title="用户管理">
+  <PageHeader>
+    <template #filter>
+      <ElInput v-model="keyword" placeholder="姓名或手机号" style="width: 240px" @keyup.enter="onSearch" />
+      <ElButton type="primary" @click="onSearch">筛选</ElButton>
+      <ElButton @click="reset">重置</ElButton>
+      <span v-if="props.q" class="text-[12.5px] tabular-nums ml-2" style="color: var(--text-muted)">
+        <span style="color: var(--text)">{{ props.total }}</span> 条已筛选
+      </span>
+    </template>
     <template #actions>
       <ElButton type="primary" @click="goCreate">+ 新增用户</ElButton>
     </template>
   </PageHeader>
 
-  <div class="bg-white rounded-md p-3 mb-3 flex gap-2 items-center shadow-[var(--shadow-card)]">
-    <ElInput v-model="keyword" placeholder="姓名或手机号" style="width: 240px" @keyup.enter="onSearch" />
-    <ElButton @click="onSearch">筛选</ElButton>
-    <ElButton @click="reset">重置</ElButton>
+  <div class="mt-3">
+    <DataTable
+      :rows="props.rows"
+      :total="props.total"
+      :page="props.page"
+      :page-size="props.pageSize"
+      :columns="columns"
+      @update:page="onPage"
+      @update:pageSize="onPageSize"
+    >
+      <template #actions="{ row }">
+        <ElButton link size="small" @click="goEdit(row as UserRow)">编辑</ElButton>
+        <ElButton link size="small" @click="resetPassword(row as UserRow)">重置密码</ElButton>
+        <ElButton link size="small" type="danger" @click="destroy(row as UserRow)">删除</ElButton>
+      </template>
+    </DataTable>
   </div>
-
-  <DataTable
-    :rows="props.rows"
-    :total="props.total"
-    :page="props.page"
-    :page-size="props.pageSize"
-    :columns="columns"
-    @update:page="onPage"
-    @update:pageSize="onPageSize"
-  >
-    <template #actions="{ row }">
-      <ElButton link size="small" @click="goEdit(row as UserRow)">编辑</ElButton>
-      <ElButton link size="small" @click="resetPassword(row as UserRow)">重置密码</ElButton>
-      <ElButton link size="small" type="danger" @click="destroy(row as UserRow)">删除</ElButton>
-    </template>
-  </DataTable>
 </template>

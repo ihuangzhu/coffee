@@ -6,7 +6,7 @@
 import { Head, router, useForm } from '@inertiajs/vue3';
 import PlatformLayout from '@/layouts/PlatformLayout.vue';
 import PageHeader from '@/components/PageHeader.vue';
-import { ElButton, ElForm, ElFormItem, ElInput, ElRadioGroup, ElRadio } from 'element-plus';
+import { ElButton, ElForm, ElFormItem, ElInput, ElRadioGroup, ElRadio, ElCard } from 'element-plus';
 
 defineOptions({ layout: PlatformLayout });
 
@@ -23,9 +23,18 @@ function cancel() { router.visit(`/platform/tenants/${props.tenant.id}/stores`);
 
 <template>
   <Head :title="`编辑门店 · ${props.store.name}`" />
-  <PageHeader :title="`编辑门店 · ${props.store.name}`" />
-  <div class="bg-white rounded-md p-4 shadow-[var(--shadow-card)] max-w-[640px]">
-    <ElForm label-width="120px" @submit.prevent="submit">
+  <PageHeader :breadcrumb="[
+    { label: '租户管理', to: '/platform/tenants' },
+    { label: `${props.tenant.name} 门店`, to: `/platform/tenants/${props.tenant.id}/stores` },
+    { label: props.store.name },
+  ]">
+    <template #actions>
+      <ElButton @click="cancel">取消</ElButton>
+      <ElButton type="primary" :loading="form.processing" @click="submit">保存</ElButton>
+    </template>
+  </PageHeader>
+  <ElCard shadow="never" class="mt-3 max-w-[640px]">
+    <ElForm label-width="120px">
       <ElFormItem label="门店名称" :error="form.errors.name">
         <ElInput v-model="form.name" maxlength="100" show-word-limit style="width: 360px" />
       </ElFormItem>
@@ -38,10 +47,6 @@ function cancel() { router.visit(`/platform/tenants/${props.tenant.id}/stores`);
           禁用后该门店不出现在租户切换器与默认推导中；已选中该门店的会话下次请求自动重选其它启用门店。
         </div>
       </ElFormItem>
-      <ElFormItem>
-        <ElButton type="primary" :loading="form.processing" native-type="submit">保存</ElButton>
-        <ElButton @click="cancel">取消</ElButton>
-      </ElFormItem>
     </ElForm>
-  </div>
+  </ElCard>
 </template>

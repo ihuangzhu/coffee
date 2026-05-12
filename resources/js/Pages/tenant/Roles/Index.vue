@@ -53,12 +53,13 @@ function canManage(row: RoleRow): boolean {
 
 <template>
   <Head title="角色管理" />
-  <PageHeader title="角色管理">
+  <PageHeader>
     <template #actions>
       <ElButton type="primary" @click="goCreate">+ 新建角色</ElButton>
     </template>
   </PageHeader>
 
+  <div class="mt-3">
   <DataTable
     :rows="props.roles"
     :total="props.roles.length"
@@ -78,4 +79,5 @@ function canManage(row: RoleRow): boolean {
       <span v-else class="text-[12px]" style="color: var(--text-faint)">—</span>
     </template>
   </DataTable>
+  </div>
 </template>

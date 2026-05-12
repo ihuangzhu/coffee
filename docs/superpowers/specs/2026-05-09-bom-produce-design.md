@@ -427,11 +427,11 @@ case ProductionRead    = 'production.read';
 
 新迁移 `seed_bom_produce_permissions`（在 `2026_05_08_000073_seed_inventory_permissions.php` 之后）：
 
-| 角色 | 新增权限 |
+| 角色（实际 code） | 新增权限 |
 |---|---|
-| `RoleOwner` | 6 项全部 |
-| `RoleAdmin` | 6 项全部 |
-| `RoleManager` | `boms.read` + `production.read` + `production.execute`（不能改/删 BOM 主数据） |
+| `TenantAdmin` | 6 项全部 |
+| `StoreManager` | `boms.read` + `boms.create` + `boms.update` + `production.read` + `production.execute`（不允许 boms.delete） |
+| `StoreClerk` | `boms.read` + `production.read` + `production.execute`（仅看 + 执行生产） |
 
 控制器各方法用 `Gate::authorize` 或路由中间件 `permission:` 守。
 

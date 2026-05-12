@@ -81,23 +81,23 @@ const columns = [
 
 <template>
   <Head title="租户管理" />
-  <PageHeader title="租户管理">
+  <PageHeader>
+    <template #filter>
+      <ElInput v-model="keyword" placeholder="租户名称" style="width: 240px" @keyup.enter="onSearch" />
+      <ElSelect v-model="statusFilter" style="width: 140px">
+        <ElOption label="全部状态" value="all" />
+        <ElOption label="启用" value="active" />
+        <ElOption label="已禁用" value="disabled" />
+      </ElSelect>
+      <ElButton type="primary" @click="onSearch">筛选</ElButton>
+      <ElButton @click="reset">重置</ElButton>
+    </template>
     <template #actions>
       <ElButton type="primary" @click="goCreate">+ 新建租户</ElButton>
     </template>
   </PageHeader>
 
-  <div class="bg-white rounded-md p-3 mb-3 flex gap-2 items-center shadow-[var(--shadow-card)]">
-    <ElInput v-model="keyword" placeholder="租户名称" style="width: 240px" @keyup.enter="onSearch" />
-    <ElSelect v-model="statusFilter" style="width: 140px">
-      <ElOption label="全部状态" value="all" />
-      <ElOption label="启用" value="active" />
-      <ElOption label="已禁用" value="disabled" />
-    </ElSelect>
-    <ElButton @click="onSearch">筛选</ElButton>
-    <ElButton @click="reset">重置</ElButton>
-  </div>
-
+  <div class="mt-3">
   <DataTable
     :rows="props.rows"
     :total="props.total"
@@ -126,4 +126,5 @@ const columns = [
       </ElButton>
     </template>
   </DataTable>
+  </div>
 </template>

@@ -166,12 +166,22 @@ class TenantUserController extends Controller
             ->where('status', 'active')
             ->first(['role_id']);
 
+        $storeBindingCount = Membership::query()->withoutGlobalScopes()
+            ->where('user_id', $user->id)
+            ->where('tenant_id', $tenantId)
+            ->whereNotNull('store_id')
+            ->where('status', 'active')
+            ->count();
+
         return Inertia::render('tenant/Users/Edit', [
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'phone' => $user->phone,
                 'tenant_role_id' => $binding?->role_id,
+                'created_at' => $user->created_at?->toIso8601String(),
+                'last_login_at' => $user->last_login_at?->toIso8601String(),
+                'store_binding_count' => $storeBindingCount,
             ],
             'tenantRoles' => $this->tenantRoleOptions($tenantId),
         ]);

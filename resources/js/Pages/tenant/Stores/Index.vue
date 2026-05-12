@@ -71,7 +71,17 @@ const columns = [
 
 <template>
   <Head title="门店" />
-  <PageHeader title="门店">
+  <PageHeader>
+    <template #filter>
+      <ElInput v-model="keyword" placeholder="门店名称" style="width: 240px" @keyup.enter="onSearch" />
+      <ElSelect v-model="statusFilter" style="width: 140px">
+        <ElOption label="全部状态" value="all" />
+        <ElOption label="启用" value="active" />
+        <ElOption label="已禁用" value="disabled" />
+      </ElSelect>
+      <ElButton type="primary" @click="onSearch">筛选</ElButton>
+      <ElButton @click="reset">重置</ElButton>
+    </template>
     <template #actions>
       <span class="text-[12px]" :style="{ color: 'var(--text-faint)' }">
         新增 / 编辑门店请到平台后台
@@ -79,17 +89,7 @@ const columns = [
     </template>
   </PageHeader>
 
-  <div class="bg-white rounded-md p-3 mb-3 flex gap-2 items-center shadow-[var(--shadow-card)]">
-    <ElInput v-model="keyword" placeholder="门店名称" style="width: 240px" @keyup.enter="onSearch" />
-    <ElSelect v-model="statusFilter" style="width: 140px">
-      <ElOption label="全部状态" value="all" />
-      <ElOption label="启用" value="active" />
-      <ElOption label="已禁用" value="disabled" />
-    </ElSelect>
-    <ElButton @click="onSearch">筛选</ElButton>
-    <ElButton @click="reset">重置</ElButton>
-  </div>
-
+  <div class="mt-3">
   <DataTable
     :rows="props.rows"
     :total="props.total"
@@ -113,4 +113,5 @@ const columns = [
       </div>
     </template>
   </DataTable>
+  </div>
 </template>

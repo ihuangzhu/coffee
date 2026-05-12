@@ -77,11 +77,13 @@ const readOnly = computed(() => props.value.role.is_system);
 
 <template>
   <Head title="编辑角色" />
-  <PageHeader
-    title="编辑角色"
-    :breadcrumb="[{ label: '角色管理', to: '/tenant/roles' }, { label: props.role.name }]"
-  />
-  <div class="bg-white rounded-md p-6 shadow-[var(--shadow-card)]">
+  <PageHeader :breadcrumb="[{ label: '角色管理', to: '/tenant/roles' }, { label: props.role.name }]">
+    <template #actions>
+      <ElButton @click="router.visit('/tenant/roles')">取消</ElButton>
+      <ElButton type="primary" :loading="form.processing" :disabled="readOnly" @click="submit">保存</ElButton>
+    </template>
+  </PageHeader>
+  <ElCard shadow="never" class="mt-3">
     <ElAlert
       v-if="readOnly" type="warning" :closable="false" show-icon
       title="系统内置角色不可修改" class="mb-4"
@@ -118,10 +120,6 @@ const readOnly = computed(() => props.value.role.is_system);
           </ElCard>
         </div>
       </ElFormItem>
-      <div class="flex justify-end gap-2 mt-4">
-        <ElButton @click="router.visit('/tenant/roles')">取消</ElButton>
-        <ElButton type="primary" :loading="form.processing" :disabled="readOnly" @click="submit">保存</ElButton>
-      </div>
     </ElForm>
-  </div>
+  </ElCard>
 </template>

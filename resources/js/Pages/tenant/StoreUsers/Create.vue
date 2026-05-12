@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import TenantLayout from '@/layouts/TenantLayout.vue';
 import PageHeader from '@/components/PageHeader.vue';
-import { ElForm, ElFormItem, ElSelect, ElOption, ElButton } from 'element-plus';
+import { ElForm, ElFormItem, ElSelect, ElOption, ElButton, ElCard } from 'element-plus';
 
 defineOptions({ layout: TenantLayout });
 
@@ -19,23 +19,29 @@ function submit() { form.post(`/tenant/stores/${props.store.id}/users`); }
 
 <template>
   <Head :title="`${props.store.name} · 加入人员`" />
-  <PageHeader :title="`${props.store.name} · 加入人员`" />
-  <div class="bg-white rounded-md p-4 shadow-[var(--shadow-card)]">
-    <ElForm @submit.prevent="submit">
+  <PageHeader :breadcrumb="[
+    { label: '门店列表', to: '/tenant/stores' },
+    { label: props.store.name, to: `/tenant/stores/${props.store.id}/users` },
+    { label: '加入人员' },
+  ]">
+    <template #actions>
+      <ElButton @click="router.visit(`/tenant/stores/${props.store.id}/users`)">取消</ElButton>
+      <ElButton type="primary" :loading="form.processing" @click="submit">加入</ElButton>
+    </template>
+  </PageHeader>
+  <ElCard shadow="never" class="mt-3 max-w-xl">
+    <ElForm label-position="top">
       <ElFormItem label="人员" :error="form.errors.user_id">
-        <ElSelect v-model="form.user_id" filterable placeholder="选择本租户成员" style="width: 360px">
+        <ElSelect v-model="form.user_id" filterable placeholder="选择本租户成员" style="width: 100%">
           <ElOption v-for="c in props.candidates" :key="c.id" :value="c.id" :label="`${c.name} · ${c.phone}`" />
         </ElSelect>
       </ElFormItem>
       <ElFormItem label="门店角色" :error="form.errors.role_id">
-        <ElSelect v-model="form.role_id" placeholder="选择角色" style="width: 360px">
+        <ElSelect v-model="form.role_id" placeholder="选择角色" style="width: 100%">
           <ElOption v-for="r in props.storeRoles" :key="r.id" :value="r.id"
                     :label="r.is_system ? `${r.name}（系统）` : r.name" />
         </ElSelect>
       </ElFormItem>
-      <ElFormItem>
-        <ElButton type="primary" :loading="form.processing" native-type="submit">加入</ElButton>
-      </ElFormItem>
     </ElForm>
-  </div>
+  </ElCard>
 </template>

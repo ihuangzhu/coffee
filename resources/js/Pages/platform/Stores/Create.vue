@@ -5,7 +5,7 @@
 import { Head, router, useForm } from '@inertiajs/vue3';
 import PlatformLayout from '@/layouts/PlatformLayout.vue';
 import PageHeader from '@/components/PageHeader.vue';
-import { ElButton, ElForm, ElFormItem, ElInput } from 'element-plus';
+import { ElButton, ElForm, ElFormItem, ElInput, ElCard } from 'element-plus';
 
 defineOptions({ layout: PlatformLayout });
 
@@ -19,16 +19,21 @@ function cancel() { router.visit(`/platform/tenants/${props.tenant.id}/stores`);
 
 <template>
   <Head :title="`新建门店 · ${props.tenant.name}`" />
-  <PageHeader :title="`新建门店 · ${props.tenant.name}`" />
-  <div class="bg-white rounded-md p-4 shadow-[var(--shadow-card)] max-w-[640px]">
-    <ElForm label-width="120px" @submit.prevent="submit">
+  <PageHeader :breadcrumb="[
+    { label: '租户管理', to: '/platform/tenants' },
+    { label: `${props.tenant.name} 门店`, to: `/platform/tenants/${props.tenant.id}/stores` },
+    { label: '新建门店' },
+  ]">
+    <template #actions>
+      <ElButton @click="cancel">取消</ElButton>
+      <ElButton type="primary" :loading="form.processing" @click="submit">创建</ElButton>
+    </template>
+  </PageHeader>
+  <ElCard shadow="never" class="mt-3 max-w-[640px]">
+    <ElForm label-width="120px">
       <ElFormItem label="门店名称" :error="form.errors.name">
         <ElInput v-model="form.name" maxlength="100" show-word-limit style="width: 360px" />
       </ElFormItem>
-      <ElFormItem>
-        <ElButton type="primary" :loading="form.processing" native-type="submit">创建</ElButton>
-        <ElButton @click="cancel">取消</ElButton>
-      </ElFormItem>
     </ElForm>
-  </div>
+  </ElCard>
 </template>

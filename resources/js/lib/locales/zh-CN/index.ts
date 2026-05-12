@@ -8,6 +8,7 @@
  */
 import auth from './auth';
 import common from './common';
+import enums from './enums';
 import nav from './nav';
 import permissions from './permissions';
 import login from './pages/login';
@@ -23,6 +24,7 @@ export default {
   nav,
   validation,
   permissions,
+  enums,
   pages: {
     login,
     profile,

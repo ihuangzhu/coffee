@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { router, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
+import {
+  ElCard, ElForm, ElFormItem, ElSelect, ElOption, ElInputNumber, ElButton,
+} from 'element-plus';
+import TenantLayout from '@/layouts/TenantLayout.vue';
+import PageHeader from '@/components/PageHeader.vue';
+
+defineOptions({ layout: TenantLayout });
 
 const page = usePage();
 const props = computed(() => page.props as unknown as {
@@ -14,63 +21,58 @@ const form = ref({
   subtype: 'MANUAL' as 'INITIAL' | 'MANUAL',
 });
 const errors = ref<Record<string, string>>({});
+const processing = ref(false);
 
 function submit() {
-  // qty_change 应当与 direction 同号；前端做一次纠正
+  processing.value = true;
   const v = Math.abs(form.value.qty_change);
   const signed = form.value.direction === 'OUT' ? -v : v;
   router.post('/tenant/stock/adjust', { ...form.value, qty_change: signed }, {
     onError: (e) => { errors.value = e as Record<string, string>; },
+    onFinish: () => { processing.value = false; },
   });
 }
 </script>
 
 <template>
-  <div class="p-6 max-w-xl">
-    <h1 class="text-xl font-medium mb-4">手动调整库存</h1>
+  <Head title="库存调整" />
+  <PageHeader :breadcrumb="[{ label: '库存查询', to: '/tenant/stock' }, { label: '手动调整' }]">
+    <template #actions>
+      <ElButton @click="router.visit('/tenant/stock')">取消</ElButton>
+      <ElButton type="primary" :loading="processing" @click="submit">提交</ElButton>
+    </template>
+  </PageHeader>
 
-    <form @submit.prevent="submit" class="space-y-4 text-sm">
-      <div>
-        <label class="block mb-1">门店</label>
-        <select v-model="form.store_id" class="w-full px-2 py-1 border rounded">
-          <option value="">请选择</option>
-          <option v-for="s in props.stores" :key="s.id" :value="s.id">{{ s.name }}</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block mb-1">SKU</label>
-        <select v-model="form.sku_id" class="w-full px-2 py-1 border rounded">
-          <option value="">请选择</option>
-          <option v-for="s in props.skus" :key="s.id" :value="s.id">
-            {{ s.item_name }} ({{ s.unit }}) {{ s.barcode ? '· ' + s.barcode : '' }}
-          </option>
-        </select>
-      </div>
-
+  <ElCard shadow="never" class="mt-3 max-w-2xl">
+    <ElForm label-position="top">
+      <ElFormItem label="门店" :error="errors.store_id">
+        <ElSelect v-model="form.store_id" placeholder="请选择" style="width: 100%">
+          <ElOption v-for="s in props.stores" :key="s.id" :value="s.id" :label="s.name" />
+        </ElSelect>
+      </ElFormItem>
+      <ElFormItem label="SKU" :error="errors.sku_id">
+        <ElSelect v-model="form.sku_id" placeholder="请选择" filterable style="width: 100%">
+          <ElOption v-for="s in props.skus" :key="s.id" :value="s.id"
+            :label="`${s.item_name} (${s.unit})${s.barcode ? ' · ' + s.barcode : ''}`" />
+        </ElSelect>
+      </ElFormItem>
       <div class="grid grid-cols-3 gap-4">
-        <div>
-          <label class="block mb-1">数量</label>
-          <input type="number" step="0.0001" v-model.number="form.qty_change"
-            class="w-full px-2 py-1 border rounded" />
-        </div>
-        <div>
-          <label class="block mb-1">方向</label>
-          <select v-model="form.direction" class="w-full px-2 py-1 border rounded">
-            <option value="IN">入库</option>
-            <option value="OUT">出库</option>
-          </select>
-        </div>
-        <div>
-          <label class="block mb-1">子类型</label>
-          <select v-model="form.subtype" class="w-full px-2 py-1 border rounded">
-            <option value="INITIAL">初始化</option>
-            <option value="MANUAL">手动</option>
-          </select>
-        </div>
+        <ElFormItem label="数量" :error="errors.qty_change">
+          <ElInputNumber v-model="form.qty_change" :precision="4" controls-position="right" style="width: 100%" />
+        </ElFormItem>
+        <ElFormItem label="方向">
+          <ElSelect v-model="form.direction" style="width: 100%">
+            <ElOption label="入库" value="IN" />
+            <ElOption label="出库" value="OUT" />
+          </ElSelect>
+        </ElFormItem>
+        <ElFormItem label="子类型">
+          <ElSelect v-model="form.subtype" style="width: 100%">
+            <ElOption label="初始化" value="INITIAL" />
+            <ElOption label="手动" value="MANUAL" />
+          </ElSelect>
+        </ElFormItem>
       </div>
-
-      <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded">提交</button>
-    </form>
-  </div>
+    </ElForm>
+  </ElCard>
 </template>

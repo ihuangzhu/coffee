@@ -1,30 +1,40 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { router, Link } from '@inertiajs/vue3'
-import { ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElButton, ElInputNumber, ElMessage } from 'element-plus'
+import { ref } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
+import {
+  ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElButton,
+  ElInputNumber, ElCard, ElMessage,
+} from 'element-plus';
+import TenantLayout from '@/layouts/TenantLayout.vue';
+import PageHeader from '@/components/PageHeader.vue';
+import { enumDict, ownerTypeLabel } from '@/lib/itemTypes';
+
+const itemTypeScopes = enumDict('item_type_scope');
+
+defineOptions({ layout: TenantLayout });
 
 interface Category {
-  id: string
-  parent_id: string | null
-  owner_type: 'TENANT' | 'STORE'
-  owner_store_id: string | null
-  category_type: 'BUSINESS' | 'INVENTORY' | 'BOTH'
-  item_type_scope: string
-  name: string
-  code: string | null
-  sort_no: number
-  status: 'active' | 'disabled'
+  id: string;
+  parent_id: string | null;
+  owner_type: 'TENANT' | 'STORE';
+  owner_store_id: string | null;
+  category_type: 'BUSINESS' | 'INVENTORY' | 'BOTH';
+  item_type_scope: string;
+  name: string;
+  code: string | null;
+  sort_no: number;
+  status: 'active' | 'disabled';
 }
 
 interface ParentOption {
-  id: string
-  name: string
-  owner_type: 'TENANT' | 'STORE'
-  level: number
-  path: string
+  id: string;
+  name: string;
+  owner_type: 'TENANT' | 'STORE';
+  level: number;
+  path: string;
 }
 
-const props = defineProps<{ category: Category, parents: ParentOption[] }>()
+const props = defineProps<{ category: Category; parents: ParentOption[] }>();
 
 const form = ref({
   owner_type: props.category.owner_type,
@@ -36,26 +46,34 @@ const form = ref({
   code: props.category.code ?? '',
   sort_no: props.category.sort_no,
   status: props.category.status,
-})
+});
+const processing = ref(false);
 
-const submit = () => {
+function submit() {
+  processing.value = true;
   router.patch(`/tenant/categories/${props.category.id}`, {
     ...form.value,
-    owner_store_id: form.value.owner_type === 'STORE'
-      ? (form.value.owner_store_id || null) : null,
+    owner_store_id: form.value.owner_type === 'STORE' ? (form.value.owner_store_id || null) : null,
     parent_id: form.value.parent_id || null,
     code: form.value.code || null,
   }, {
+    onFinish: () => { processing.value = false; },
     onSuccess: () => ElMessage.success('已更新'),
-  })
+  });
 }
 </script>
 
 <template>
-  <div class="p-6 max-w-2xl">
-    <h1 class="text-xl font-bold mb-4">编辑分类</h1>
+  <Head title="编辑分类" />
+  <PageHeader :breadcrumb="[{ label: '商品分类', to: '/tenant/categories' }, { label: props.category.name }]">
+    <template #actions>
+      <ElButton @click="router.visit('/tenant/categories')">取消</ElButton>
+      <ElButton type="primary" :loading="processing" @click="submit">保存</ElButton>
+    </template>
+  </PageHeader>
 
-    <ElForm :model="form" label-width="120px" @submit.prevent="submit">
+  <ElCard shadow="never" class="mt-3 max-w-2xl">
+    <ElForm :model="form" label-width="100px">
       <ElFormItem label="所有者">
         <ElSelect v-model="form.owner_type">
           <ElOption label="租户公共" value="TENANT" />
@@ -74,20 +92,15 @@ const submit = () => {
       </ElFormItem>
       <ElFormItem label="挂载范围">
         <ElSelect v-model="form.item_type_scope">
-          <ElOption label="全部 (ALL)" value="ALL" />
-          <ElOption label="可销售商品" value="SALE_PRODUCT" />
-          <ElOption label="原料" value="RAW_MATERIAL" />
-          <ElOption label="半成品" value="SEMI_FINISHED" />
-          <ElOption label="成品" value="FINISHED_GOOD" />
-          <ElOption label="服务" value="SERVICE" />
-          <ElOption label="包材" value="PACKAGE" />
+          <ElOption v-for="(label, code) in itemTypeScopes" :key="code"
+            :value="code" :label="label" />
         </ElSelect>
       </ElFormItem>
       <ElFormItem label="父分类">
-        <ElSelect v-model="form.parent_id" clearable filterable>
+        <ElSelect v-model="form.parent_id" clearable filterable style="width: 100%">
           <ElOption v-for="p in parents" :key="p.id"
             :value="p.id"
-            :label="'│ '.repeat(p.level - 1) + p.name + ' (' + p.owner_type + ')'" />
+            :label="'│ '.repeat(p.level - 1) + p.name + ' (' + ownerTypeLabel(p.owner_type) + ')'" />
         </ElSelect>
       </ElFormItem>
       <ElFormItem label="名称" required>
@@ -105,12 +118,6 @@ const submit = () => {
           <ElOption label="停用" value="disabled" />
         </ElSelect>
       </ElFormItem>
-      <ElFormItem>
-        <ElButton type="primary" native-type="submit">保存</ElButton>
-        <Link href="/tenant/categories" class="ml-2">
-          <ElButton>取消</ElButton>
-        </Link>
-      </ElFormItem>
     </ElForm>
-  </div>
+  </ElCard>
 </template>

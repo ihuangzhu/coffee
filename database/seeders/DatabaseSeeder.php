@@ -18,6 +18,8 @@ class DatabaseSeeder extends Seeder
             IdentitySkeletonSeeder::class,
             // RBAC 骨架：给已 seeded 用户分配预设角色
             RbacSkeletonSeeder::class,
+            // 商品 + 库存 fixture：分类 / 商品 / SKU / Stock owners / 初始库存
+            CatalogInventoryFixtureSeeder::class,
         ]);
     }
 }

@@ -5,7 +5,7 @@
 import { Head, router, useForm } from '@inertiajs/vue3';
 import PlatformLayout from '@/layouts/PlatformLayout.vue';
 import PageHeader from '@/components/PageHeader.vue';
-import { ElButton, ElForm, ElFormItem, ElInput, ElRadioGroup, ElRadio } from 'element-plus';
+import { ElButton, ElForm, ElFormItem, ElInput, ElRadioGroup, ElRadio, ElCard } from 'element-plus';
 
 defineOptions({ layout: PlatformLayout });
 
@@ -19,9 +19,14 @@ function cancel() { router.visit('/platform/tenants'); }
 
 <template>
   <Head :title="`编辑租户 · ${props.tenant.name}`" />
-  <PageHeader :title="`编辑租户 · ${props.tenant.name}`" />
-  <div class="bg-white rounded-md p-4 shadow-[var(--shadow-card)] max-w-[640px]">
-    <ElForm label-width="120px" @submit.prevent="submit">
+  <PageHeader :breadcrumb="[{ label: '租户管理', to: '/platform/tenants' }, { label: props.tenant.name }]">
+    <template #actions>
+      <ElButton @click="cancel">取消</ElButton>
+      <ElButton type="primary" :loading="form.processing" @click="submit">保存</ElButton>
+    </template>
+  </PageHeader>
+  <ElCard shadow="never" class="mt-3 max-w-[640px]">
+    <ElForm label-width="120px">
       <ElFormItem label="租户名称" :error="form.errors.name">
         <ElInput v-model="form.name" maxlength="100" show-word-limit style="width: 360px" />
       </ElFormItem>
@@ -32,10 +37,6 @@ function cancel() { router.visit('/platform/tenants'); }
         </ElRadioGroup>
         <div class="text-[12px] mt-1" style="color: var(--text-muted)">禁用后该租户下所有成员将无法登录。</div>
       </ElFormItem>
-      <ElFormItem>
-        <ElButton type="primary" :loading="form.processing" native-type="submit">保存</ElButton>
-        <ElButton @click="cancel">取消</ElButton>
-      </ElFormItem>
     </ElForm>
-  </div>
+  </ElCard>
 </template>

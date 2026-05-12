@@ -1,8 +1,22 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { router, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
+import { ElButton, ElSelect, ElOption, ElTag, ElMessageBox } from 'element-plus';
+import TenantLayout from '@/layouts/TenantLayout.vue';
+import PageHeader from '@/components/PageHeader.vue';
+import DataTable from '@/components/DataTable.vue';
+import { stockTxnBizTypeLabel, stockTxnDirectionLabel } from '@/lib/itemTypes';
+import dayjs from 'dayjs';
 
-interface Row {
+function fmtTime(s: string | null): string {
+  if (!s) return '';
+  const d = dayjs(s);
+  return d.isValid() ? d.format('YYYY-MM-DD HH:mm') : s;
+}
+
+defineOptions({ layout: TenantLayout });
+
+interface Row extends Record<string, unknown> {
   id: number; biz_type: string; direction: string;
   qty_change: number; sku_id: string; item_name: string;
   occurred_at: string | null;
@@ -26,75 +40,71 @@ function reload(params: Record<string, unknown> = {}) {
   }, { preserveState: true, preserveScroll: true });
 }
 
-function reverse(id: number) {
-  if (!confirm(`确认撤销流水 #${id}？`)) return;
-  router.post(`/tenant/stock/txns/${id}/reverse`, {},
+function onPage(n: number) { reload({ page: n }); }
+function onPageSize(n: number) { reload({ page: 1, per_page: n }); }
+
+async function reverse(row: Row) {
+  try {
+    await ElMessageBox.confirm(`确认撤销流水 #${row.id}？`, '撤销', { type: 'warning' });
+  } catch { return; }
+  router.post(`/tenant/stock/txns/${row.id}/reverse`, {},
     { preserveScroll: true, onSuccess: () => reload() });
 }
+
+const columns = [
+  { key: 'id', label: '#', width: 80 },
+  { key: 'biz_type', label: '类型', width: 140,
+    formatter: (r: Row) => stockTxnBizTypeLabel(r.biz_type) },
+  { key: 'direction', label: '方向', width: 80,
+    formatter: (r: Row) => stockTxnDirectionLabel(r.direction) },
+  { key: 'qty_change', label: '数量', width: 100, align: 'right' as const },
+  { key: 'item_name', label: '物料', minWidth: 180 },
+  { key: 'occurred_at', label: '时间', width: 160,
+    formatter: (r: Row) => fmtTime(r.occurred_at) },
+  { key: 'state', label: '状态', width: 100 },
+];
 </script>
 
 <template>
-  <div class="p-6">
-    <h1 class="text-xl font-medium mb-4">库存流水</h1>
-
-    <div class="flex gap-2 mb-3 text-sm">
-      <select v-model="bizType" class="px-2 py-1 border rounded"
+  <Head title="库存流水" />
+  <PageHeader>
+    <template #filter>
+      <ElSelect v-model="bizType" placeholder="业务类型" style="width: 180px"
         @change="reload({ page: 1 })">
-        <option value="all">全部类型</option>
-        <option v-for="t in props.biz_types" :key="t" :value="t">{{ t }}</option>
-      </select>
-    </div>
+        <ElOption label="全部类型" value="all" />
+        <ElOption v-for="t in props.biz_types" :key="t" :value="t" :label="stockTxnBizTypeLabel(t)" />
+      </ElSelect>
+    </template>
+  </PageHeader>
 
-    <table class="w-full text-sm border-collapse">
-      <thead>
-        <tr class="border-b bg-slate-50">
-          <th class="text-left p-2">#</th>
-          <th class="text-left p-2">类型</th>
-          <th class="text-left p-2">方向</th>
-          <th class="text-right p-2">数量</th>
-          <th class="text-left p-2">物料</th>
-          <th class="text-left p-2">时间</th>
-          <th class="text-left p-2">状态</th>
-          <th class="text-right p-2">操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="r in props.rows" :key="r.id"
-          :class="['border-b', r.is_cancelled ? 'opacity-50 line-through' : '']">
-          <td class="p-2 font-mono">{{ r.id }}</td>
-          <td class="p-2">{{ r.biz_type }}</td>
-          <td class="p-2">{{ r.direction }}</td>
-          <td class="p-2 text-right">{{ r.qty_change }}</td>
-          <td class="p-2">{{ r.item_name }}</td>
-          <td class="p-2 text-xs text-slate-500">{{ r.occurred_at }}</td>
-          <td class="p-2">
-            <span v-if="r.is_reversal" class="text-amber-600 text-xs">撤销笔</span>
-            <span v-else-if="r.is_cancelled" class="text-slate-400 text-xs">已撤销</span>
-            <span v-else class="text-emerald-600 text-xs">有效</span>
-          </td>
-          <td class="p-2 text-right">
-            <button v-if="!r.is_cancelled && !r.is_reversal"
-              class="text-rose-600 text-xs"
-              @click="reverse(r.id)">撤销</button>
-          </td>
-        </tr>
-        <tr v-if="props.rows.length === 0">
-          <td colspan="8" class="text-center text-slate-400 p-6">暂无流水</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="mt-4 flex items-center justify-between text-sm">
-      <span>共 {{ props.total }} 条</span>
-      <div class="flex gap-1">
-        <button :disabled="props.page <= 1"
-          class="px-2 py-1 border rounded disabled:opacity-40"
-          @click="reload({ page: props.page - 1 })">上一页</button>
-        <span class="px-2 py-1">{{ props.page }}</span>
-        <button :disabled="props.page * props.pageSize >= props.total"
-          class="px-2 py-1 border rounded disabled:opacity-40"
-          @click="reload({ page: props.page + 1 })">下一页</button>
-      </div>
-    </div>
+  <div class="mt-3">
+    <DataTable
+      :rows="props.rows"
+      :total="props.total"
+      :page="props.page"
+      :page-size="props.pageSize"
+      :columns="columns"
+      :actions-width="80"
+      @update:page="onPage"
+      @update:pageSize="onPageSize"
+    >
+      <template #col-id="{ row }">
+        <span class="font-mono">{{ (row as Row).id }}</span>
+      </template>
+      <template #col-state="{ row }">
+        <ElTag v-if="(row as Row).is_reversal" size="small" type="warning">撤销笔</ElTag>
+        <ElTag v-else-if="(row as Row).is_cancelled" size="small" type="info">已撤销</ElTag>
+        <ElTag v-else size="small" type="success">有效</ElTag>
+      </template>
+      <template #actions="{ row }">
+        <ElButton v-if="!(row as Row).is_cancelled && !(row as Row).is_reversal"
+          link size="small" type="danger" @click="reverse(row as Row)">撤销</ElButton>
+      </template>
+      <template #empty>
+        <div class="py-12 text-[13px] text-center" style="color: var(--text-faint)">
+          暂无流水
+        </div>
+      </template>
+    </DataTable>
   </div>
 </template>

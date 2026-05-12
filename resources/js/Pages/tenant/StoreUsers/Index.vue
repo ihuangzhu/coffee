@@ -73,18 +73,21 @@ const columns = [
 
 <template>
   <Head :title="`${props.store.name} · 人员`" />
-  <PageHeader :title="`${props.store.name} · 门店人员`">
+  <PageHeader :breadcrumb="[
+    { label: '门店列表', to: '/tenant/stores' },
+    { label: `${props.store.name} 成员` },
+  ]">
+    <template #filter>
+      <ElInput v-model="keyword" placeholder="姓名或手机号" style="width: 240px" @keyup.enter="onSearch" />
+      <ElButton type="primary" @click="onSearch">筛选</ElButton>
+      <ElButton @click="reset">重置</ElButton>
+    </template>
     <template #actions>
       <ElButton type="primary" @click="goCreate">+ 加入人员</ElButton>
     </template>
   </PageHeader>
 
-  <div class="bg-white rounded-md p-3 mb-3 flex gap-2 items-center shadow-[var(--shadow-card)]">
-    <ElInput v-model="keyword" placeholder="姓名或手机号" style="width: 240px" @keyup.enter="onSearch" />
-    <ElButton @click="onSearch">筛选</ElButton>
-    <ElButton @click="reset">重置</ElButton>
-  </div>
-
+  <div class="mt-3">
   <DataTable
     :rows="props.rows"
     :total="props.total"
@@ -109,4 +112,5 @@ const columns = [
       </div>
     </template>
   </DataTable>
+  </div>
 </template>

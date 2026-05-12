@@ -64,11 +64,13 @@ function domainLabel(d: string): string {
 
 <template>
   <Head title="新建角色" />
-  <PageHeader
-    title="新建角色"
-    :breadcrumb="[{ label: '角色管理', to: '/tenant/roles' }, { label: '新建' }]"
-  />
-  <div class="bg-white rounded-md p-6 shadow-[var(--shadow-card)]">
+  <PageHeader :breadcrumb="[{ label: '角色管理', to: '/tenant/roles' }, { label: '新建' }]">
+    <template #actions>
+      <ElButton @click="router.visit('/tenant/roles')">取消</ElButton>
+      <ElButton type="primary" :loading="form.processing" @click="submit">保存</ElButton>
+    </template>
+  </PageHeader>
+  <ElCard shadow="never" class="mt-3">
     <ElForm label-position="top">
       <ElFormItem label="作用域" :error="form.errors.scope">
         <ElRadioGroup v-model="form.scope">
@@ -101,10 +103,6 @@ function domainLabel(d: string): string {
           </ElCard>
         </div>
       </ElFormItem>
-      <div class="flex justify-end gap-2 mt-4">
-        <ElButton @click="router.visit('/tenant/roles')">取消</ElButton>
-        <ElButton type="primary" :loading="form.processing" @click="submit">保存</ElButton>
-      </div>
     </ElForm>
-  </div>
+  </ElCard>
 </template>

@@ -93,7 +93,7 @@ function openPalette() { cmd.open(); }
 
       <main class="flex-1 overflow-auto flex flex-col">
         <TabBar />
-        <div class="flex-1 max-w-[1440px] w-full mx-auto px-6 py-4">
+        <div class="flex-1 flex flex-col min-h-0 w-full px-6 pb-4">
           <slot />
         </div>
       </main>

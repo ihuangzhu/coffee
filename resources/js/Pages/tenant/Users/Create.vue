@@ -9,7 +9,7 @@ import { Head, useForm, router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import TenantLayout from '@/layouts/TenantLayout.vue';
 import PageHeader from '@/components/PageHeader.vue';
-import { ElButton, ElInput, ElForm, ElFormItem, ElSelect, ElOption } from 'element-plus';
+import { ElButton, ElInput, ElForm, ElFormItem, ElSelect, ElOption, ElCard } from 'element-plus';
 
 defineOptions({ layout: TenantLayout });
 
@@ -32,11 +32,13 @@ function submit() {
 
 <template>
   <Head title="新建用户" />
-  <PageHeader
-    title="新建用户"
-    :breadcrumb="[{ label: '用户管理', to: '/tenant/users' }, { label: '新建' }]"
-  />
-  <div class="max-w-xl bg-white rounded-md p-6 shadow-[var(--shadow-card)]">
+  <PageHeader :breadcrumb="[{ label: '用户管理', to: '/tenant/users' }, { label: '新建' }]">
+    <template #actions>
+      <ElButton @click="router.visit('/tenant/users')">取消</ElButton>
+      <ElButton type="primary" :loading="form.processing" @click="submit">保存</ElButton>
+    </template>
+  </PageHeader>
+  <ElCard shadow="never" class="mt-3 max-w-xl">
     <ElForm label-position="top">
       <ElFormItem label="姓名" :error="form.errors.name">
         <ElInput v-model="form.name" />
@@ -55,10 +57,6 @@ function submit() {
           />
         </ElSelect>
       </ElFormItem>
-      <div class="flex justify-end gap-2 mt-4">
-        <ElButton @click="router.visit('/tenant/users')">取消</ElButton>
-        <ElButton type="primary" :loading="form.processing" @click="submit">保存</ElButton>
-      </div>
     </ElForm>
-  </div>
+  </ElCard>
 </template>

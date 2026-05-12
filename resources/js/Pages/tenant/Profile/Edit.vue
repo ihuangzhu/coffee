@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import TenantLayout from '@/layouts/TenantLayout.vue';
-import PageHeader from '@/components/PageHeader.vue';
+import { ElCard, ElForm, ElFormItem, ElInput, ElButton } from 'element-plus';
 import { computed } from 'vue';
 
 defineOptions({ layout: TenantLayout });
@@ -28,40 +28,35 @@ function savePassword() {
 
 <template>
   <Head title="个人资料" />
-  <PageHeader title="个人资料" />
 
-  <div class="max-w-xl space-y-6">
-    <section class="bg-white rounded-md p-6 shadow-[var(--shadow-card)]">
-      <h2 class="font-medium mb-4">基本信息</h2>
-      <el-form label-position="top">
-        <el-form-item label="姓名" :error="profile.errors.name">
-          <el-input v-model="profile.name" />
-        </el-form-item>
-        <el-form-item label="手机号" :error="profile.errors.phone">
-          <el-input v-model="profile.phone" />
-        </el-form-item>
-        <el-button type="primary" :loading="profile.processing" @click="saveProfile">
-          保存
-        </el-button>
-      </el-form>
-    </section>
+  <div class="max-w-xl space-y-4 mt-3">
+    <ElCard shadow="never">
+      <template #header><span class="text-[14px] font-semibold">基本信息</span></template>
+      <ElForm label-position="top">
+        <ElFormItem label="姓名" :error="profile.errors.name">
+          <ElInput v-model="profile.name" />
+        </ElFormItem>
+        <ElFormItem label="手机号" :error="profile.errors.phone">
+          <ElInput v-model="profile.phone" />
+        </ElFormItem>
+        <ElButton type="primary" :loading="profile.processing" @click="saveProfile">保存</ElButton>
+      </ElForm>
+    </ElCard>
 
-    <section class="bg-white rounded-md p-6 shadow-[var(--shadow-card)]">
-      <h2 class="font-medium mb-4">修改密码</h2>
-      <el-form label-position="top">
-        <el-form-item label="当前密码" :error="pwd.errors.current_password">
-          <el-input v-model="pwd.current_password" type="password" show-password />
-        </el-form-item>
-        <el-form-item label="新密码" :error="pwd.errors.password">
-          <el-input v-model="pwd.password" type="password" show-password />
-        </el-form-item>
-        <el-form-item label="确认新密码">
-          <el-input v-model="pwd.password_confirmation" type="password" show-password />
-        </el-form-item>
-        <el-button type="primary" :loading="pwd.processing" @click="savePassword">
-          修改密码
-        </el-button>
-      </el-form>
-    </section>
+    <ElCard shadow="never">
+      <template #header><span class="text-[14px] font-semibold">修改密码</span></template>
+      <ElForm label-position="top">
+        <ElFormItem label="当前密码" :error="pwd.errors.current_password">
+          <ElInput v-model="pwd.current_password" type="password" show-password />
+        </ElFormItem>
+        <ElFormItem label="新密码" :error="pwd.errors.password">
+          <ElInput v-model="pwd.password" type="password" show-password />
+        </ElFormItem>
+        <ElFormItem label="确认新密码">
+          <ElInput v-model="pwd.password_confirmation" type="password" show-password />
+        </ElFormItem>
+        <ElButton type="primary" :loading="pwd.processing" @click="savePassword">修改密码</ElButton>
+      </ElForm>
+    </ElCard>
   </div>
 </template>
